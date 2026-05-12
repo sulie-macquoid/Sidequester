@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { motion, useMotionValue, useTransform, type PanInfo } from 'motion/react'
+import { useEffect, useState, useRef } from 'react'
+import { motion, AnimatePresence, LayoutGroup, useMotionValue, useTransform, type PanInfo } from 'motion/react'
 import { ArrowLeft, RotateCcw } from 'lucide-react'
 import { useGame } from '../hooks/useGame'
 import { useTimer } from '../hooks/useTimer'
@@ -23,10 +23,9 @@ interface Props {
 }
 
 function SwipeableCard({
-  cardId, isFlipped, onDragUpdate, onDragEnd, children,
+  cardId, onDragUpdate, onDragEnd, children,
 }: {
   cardId: string
-  isFlipped: boolean
   onDragUpdate: (x: number) => void
   onDragEnd: (info: PanInfo, cardId: string) => void
   children: React.ReactNode
@@ -35,27 +34,19 @@ function SwipeableCard({
   const dragRotate = useTransform(dragX, [-300, 0, 300], [-15, 0, 15])
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.8 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-      className="absolute inset-0"
-    >
+    <div className="w-full h-full">
       <motion.div
-        drag={isFlipped ? 'x' : false}
+        drag="x"
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.7}
-        style={{ x: dragX, rotate: dragRotate, transformStyle: 'preserve-3d', perspective: 800 } as any}
+        style={{ x: dragX, rotate: dragRotate } as any}
         onDrag={(_, info) => onDragUpdate(info.offset.x)}
         onDragEnd={(_, info) => onDragEnd(info, cardId)}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ type: 'spring', stiffness: 200, damping: 20 }}
         className="w-full h-full"
       >
         {children}
       </motion.div>
-    </motion.div>
+    </div>
   )
 }
 
@@ -67,6 +58,9 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
   const [started, setStarted] = useState(false)
   const [scoreAnim, setScoreAnim] = useState(false)
   const [dragX, setDragX] = useState(0)
+  const [expandedCardId, setExpandedCardId] = useState<string | null>(null)
+  const timerRef = useRef(timer)
+  timerRef.current = timer
 
   useEffect(() => {
     game.startGame(deckId)
@@ -95,10 +89,10 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      game.saveTimer(timer.elapsed)
+      game.saveTimer(timerRef.current.elapsed)
     }, 5000)
     return () => clearInterval(interval)
-  }, [timer.elapsed])
+  }, [])
 
   const triggerScoreAnim = () => {
     setScoreAnim(true)
@@ -108,11 +102,13 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
   const handleComplete = (cardId: string) => {
     game.completeQuest(cardId)
     triggerScoreAnim()
+    setExpandedCardId(null)
     if (navigator.vibrate) navigator.vibrate(10)
   }
 
   const handleDiscard = (cardId: string) => {
     game.discardQuest(cardId)
+    setExpandedCardId(null)
     if (navigator.vibrate) navigator.vibrate(10)
   }
 
@@ -125,11 +121,20 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
     }
   }
 
+  const handleCardClick = (cardId: string) => {
+    setExpandedCardId(cardId)
+  }
+
+  const handleCollapse = () => {
+    setExpandedCardId(null)
+  }
+
   const handleReset = () => {
     game.resetGame()
     timer.reset()
     setShowResetConfirm(false)
     setStarted(false)
+    setExpandedCardId(null)
     game.startGame(deckId)
     setTimeout(() => {
       setStarted(true)
@@ -138,10 +143,11 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
   }
 
   const completedCount = game.completedEntries.length
+  const expandedCard = expandedCardId ? game.hand.find(c => c.id === expandedCardId) : null
 
   return (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-      <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
         <div className="flex items-center gap-2">
           <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} style={{ color: 'var(--text-primary)' }}>
             <ArrowLeft size={18} />
@@ -168,7 +174,7 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col px-4 py-4 relative">
+      <div className="flex-1 flex flex-col px-4 py-4 relative overflow-y-auto">
         <div
           className="fixed top-0 bottom-0 left-0 w-2 z-50 pointer-events-none transition-opacity duration-150"
           style={{
@@ -183,13 +189,16 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
             opacity: dragX > 20 ? Math.min(1, dragX / 150) : 0,
           }}
         />
-        <div className="relative w-full max-w-sm mx-auto flex-1" style={{ minHeight: 0 }}>
-          <div className="grid grid-cols-2 gap-3">
-            {game.hand.map((card, i) => {
-              const isFlipped = game.flippedIds.has(card.id)
+
+        <LayoutGroup>
+          <div className="grid grid-cols-2 gap-3 w-full max-w-sm mx-auto">
+            {game.hand.map(card => {
+              const isExpanded = expandedCardId === card.id
+              if (isExpanded) return null
               return (
                 <motion.div
                   key={card.id}
+                  layoutId={card.id}
                   layout="position"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -197,54 +206,56 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
                   className="relative"
                   style={{ aspectRatio: '3/4' }}
                 >
-                  <SwipeableCard
-                    cardId={card.id}
-                    isFlipped={isFlipped}
-                    onDragUpdate={setDragX}
-                    onDragEnd={(info, id) => handleDragEnd(undefined, info, id)}
-                  >
-                    <div
-                      style={{
-                        backfaceVisibility: 'hidden' as any,
-                        position: 'absolute',
-                        inset: 0,
-                        pointerEvents: isFlipped ? 'none' : 'auto',
-                      }}
-                    >
-                      <CardBack
-                        emoji={card.emoji}
-                        title={card.title}
-                        value={card.value}
-                        color={card.color}
-                        index={i}
-                        flipped={false}
-                        onFlip={() => game.flipCard(card.id)}
-                      />
-                    </div>
-                    <div
-                      style={{
-                        backfaceVisibility: 'hidden' as any,
-                        position: 'absolute',
-                        inset: 0,
-                        transform: 'rotateY(180deg)',
-                        pointerEvents: isFlipped ? 'auto' : 'none',
-                      } as any}
-                    >
-                      <CardFront
-                        emoji={card.emoji}
-                        title={card.title}
-                        description={card.description}
-                        value={card.value}
-                        color={card.color}
-                        onFlip={() => game.flipCard(card.id)}
-                      />
-                    </div>
-                  </SwipeableCard>
+                  <CardBack
+                    emoji={card.emoji}
+                    title={card.title}
+                    value={card.value}
+                    color={card.color}
+                    index={game.hand.indexOf(card)}
+                    flipped={false}
+                    onFlip={() => handleCardClick(card.id)}
+                  />
                 </motion.div>
               )
             })}
           </div>
-        </div>
+
+          <AnimatePresence>
+            {expandedCard && (
+              <motion.div
+                key={`overlay-${expandedCard.id}`}
+                layoutId={expandedCard.id}
+                className="fixed inset-0 z-50 flex items-center justify-center"
+                style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                initial={{ backgroundColor: 'rgba(0,0,0,0)' }}
+                animate={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                exit={{ backgroundColor: 'rgba(0,0,0,0)' }}
+                onClick={handleCollapse}
+              >
+                <motion.div
+                  className="w-[85vw] max-w-sm"
+                  style={{ aspectRatio: '3/4' }}
+                  onClick={e => e.stopPropagation()}
+                >
+                  <SwipeableCard
+                    cardId={expandedCard.id}
+                    onDragUpdate={setDragX}
+                    onDragEnd={(info, id) => handleDragEnd(undefined, info, id)}
+                  >
+                    <CardFront
+                      emoji={expandedCard.emoji}
+                      title={expandedCard.title}
+                      description={expandedCard.description}
+                      value={expandedCard.value}
+                      color={expandedCard.color}
+                      onFlip={handleCollapse}
+                    />
+                  </SwipeableCard>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </LayoutGroup>
 
         {game.hand.length === 0 && game.totalQuests === 0 && (
           <div className="text-center py-4">
