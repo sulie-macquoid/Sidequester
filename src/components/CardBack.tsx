@@ -1,0 +1,49 @@
+import { motion } from 'motion/react'
+
+interface Props {
+  emoji: string
+  title: string
+  value: number
+  color: string
+  index: number
+  flipped: boolean
+  onFlip: () => void
+}
+
+export default function CardBack({ emoji, title, value, color, index, flipped, onFlip }: Props) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
+      onClick={flipped ? undefined : onFlip}
+      className="rounded-2xl flex flex-col items-center justify-center p-2 cursor-pointer relative overflow-hidden"
+      style={{
+        backgroundColor: 'var(--surface)',
+        aspectRatio: '3/4',
+      }}
+      whileHover={{ scale: 1.03 }}
+      whileTap={{ scale: 0.97 }}
+    >
+      <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: color }} />
+
+      <div
+        className="w-10 h-10 rounded-full flex items-center justify-center mb-1"
+        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+      >
+        <span className="text-xl">{emoji}</span>
+      </div>
+
+      <div className="text-[10px] font-semibold text-center leading-tight max-w-full px-1 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+        {title}
+      </div>
+
+      <div
+        className="mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+        style={{ backgroundColor: color, color: 'white' }}
+      >
+        ★{value}
+      </div>
+    </motion.div>
+  )
+}
