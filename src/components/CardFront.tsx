@@ -11,7 +11,7 @@ export default function CardFront({ emoji, title, description, value, color, onF
   return (
     <div
       onClick={onFlip}
-      className="w-full h-full rounded-2xl flex flex-col p-4 cursor-pointer relative overflow-hidden touch-none select-none"
+      className="w-full h-full rounded-2xl flex flex-col cursor-pointer relative overflow-hidden touch-none select-none"
       style={{ backgroundColor: 'var(--surface)' }}
     >
       <div
@@ -23,28 +23,28 @@ export default function CardFront({ emoji, title, description, value, color, onF
 
       <div className="absolute top-0 left-0 w-1 h-full" style={{ backgroundColor: color }} />
 
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{emoji}</span>
-          <div
-            className="px-2 py-0.5 rounded-full text-xs font-bold"
-            style={{ backgroundColor: color, color: 'white' }}
-          >
-            ★{value}
-          </div>
+      <div className="flex items-center gap-3 pt-5 px-5 pb-2 shrink-0">
+        <span className="text-3xl">{emoji}</span>
+        <div
+          className="px-3 py-1 rounded-full text-sm font-bold"
+          style={{ backgroundColor: color, color: 'white' }}
+        >
+          ★{value}
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col justify-center">
-        <h3 className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+      <div className="flex-1 flex flex-col px-5 min-h-0">
+        <h3 className="text-xl font-bold leading-snug mb-2" style={{ color: 'var(--text-primary)' }}>
           {title}
         </h3>
-        <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-          {description}
-        </p>
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            {description}
+          </p>
+        </div>
       </div>
 
-      <div className="flex justify-between text-[10px] mt-auto pt-2" style={{ color: 'var(--text-secondary)' }}>
+      <div className="flex justify-between text-[10px] px-5 pb-4 pt-2 shrink-0" style={{ color: 'var(--text-secondary)' }}>
         <span>Swipe ← to discard</span>
         <span>Swipe → to complete</span>
       </div>

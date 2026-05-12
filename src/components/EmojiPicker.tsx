@@ -42,7 +42,7 @@ export default function EmojiPicker({ selected, onSelect }: Props) {
           <button
             key={emoji}
             onClick={() => onSelect(emoji)}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg text-lg transition-all shrink-0 ${
+            className={`w-9 h-9 flex items-center justify-center rounded-lg text-lg transition-all shrink-0 focus:outline-none ${
               selected === emoji ? 'scale-110' : ''
             }`}
             style={{
@@ -56,7 +56,7 @@ export default function EmojiPicker({ selected, onSelect }: Props) {
         ))}
         <button
           onClick={() => setAdding(true)}
-          className="w-9 h-9 flex items-center justify-center rounded-lg text-lg shrink-0 border border-dashed"
+          className="w-9 h-9 flex items-center justify-center rounded-lg text-lg shrink-0 border border-dashed focus:outline-none"
           style={{ borderColor: 'var(--border)', color: 'var(--text-secondary)' }}
         >
           <Plus size={16} />

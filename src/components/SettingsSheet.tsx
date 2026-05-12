@@ -154,7 +154,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
                   <button
                     key={emoji}
                     onClick={() => handleEmojiClick(emoji)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-base transition-all"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-base transition-all focus:outline-none"
                     style={{
                       backgroundColor: isSelected ? 'rgba(220,20,60,0.25)' : 'var(--surface)',
                       outline: isSelected ? '2px solid #DC143C' : 'none',
