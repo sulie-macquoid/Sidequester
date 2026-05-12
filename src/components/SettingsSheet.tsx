@@ -78,7 +78,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.3.0</div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.4.0</div>
 
           <div>
             <label className="text-sm font-medium block mb-2" style={{ color: 'var(--text-primary)' }}>
