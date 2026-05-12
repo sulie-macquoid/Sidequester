@@ -38,6 +38,7 @@ function SwipeableCard({
       <motion.div
         drag="x"
         dragElastic={0.7}
+        dragSnapToOrigin
         style={{ x: dragX, rotate: dragRotate } as any}
         onDrag={(_, info) => onDragUpdate(info.offset.x)}
         onDragEnd={(_, info) => onDragEnd(info, cardId)}
@@ -264,7 +265,7 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
         )}
       </div>
 
-      <div className="px-4 py-3 flex justify-center gap-3">
+      <div className="px-4 pb-6 pt-1 flex justify-center gap-3">
         <button
           onClick={() => setShowResetConfirm(true)}
           className="px-4 py-2 rounded-xl text-xs font-medium"
