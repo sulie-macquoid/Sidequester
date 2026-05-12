@@ -47,8 +47,6 @@ export default function EmojiPicker({ selected, onSelect }: Props) {
             }`}
             style={{
               backgroundColor: selected === emoji ? '#54A0FF' : 'var(--bg)',
-              outline: selected === emoji ? '2px solid #54A0FF' : 'none',
-              outlineOffset: '2px',
             }}
           >
             {emoji}
