@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import { motion, AnimatePresence, LayoutGroup, useMotionValue, useTransform, type PanInfo } from 'motion/react'
+import { motion, AnimatePresence, useMotionValue, useTransform, type PanInfo } from 'motion/react'
 import { ArrowLeft, RotateCcw } from 'lucide-react'
 import { useGame } from '../hooks/useGame'
 import { useTimer } from '../hooks/useTimer'
@@ -37,7 +37,6 @@ function SwipeableCard({
     <div className="w-full h-full">
       <motion.div
         drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.7}
         style={{ x: dragX, rotate: dragRotate } as any}
         onDrag={(_, info) => onDragUpdate(info.offset.x)}
@@ -190,22 +189,20 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
           }}
         />
 
-        <LayoutGroup>
-          <div className="grid grid-cols-2 gap-3 w-full max-w-sm mx-auto">
-            {game.hand.map(card => {
-              const isExpanded = expandedCardId === card.id
-              if (isExpanded) return null
-              return (
-                <motion.div
-                  key={card.id}
-                  layoutId={card.id}
-                  layout="position"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                  className="relative"
-                  style={{ aspectRatio: '3/4' }}
-                >
+        <div className="grid grid-cols-2 gap-3 w-full max-w-sm mx-auto">
+          {game.hand.map(card => {
+            const isExpanded = expandedCardId === card.id
+            return (
+              <motion.div
+                key={card.id}
+                layout="position"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: isExpanded ? 0 : 1, scale: isExpanded ? 0.8 : 1 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                className="relative"
+                style={{ aspectRatio: '3/4', pointerEvents: isExpanded ? 'none' : 'auto' }}
+              >
+                <div style={{ opacity: isExpanded ? 0 : 1 }}>
                   <CardBack
                     emoji={card.emoji}
                     title={card.title}
@@ -215,47 +212,50 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
                     flipped={false}
                     onFlip={() => handleCardClick(card.id)}
                   />
-                </motion.div>
-              )
-            })}
-          </div>
-
-          <AnimatePresence>
-            {expandedCard && (
-              <motion.div
-                key={`overlay-${expandedCard.id}`}
-                layoutId={expandedCard.id}
-                className="fixed inset-0 z-50 flex items-center justify-center"
-                style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-                initial={{ backgroundColor: 'rgba(0,0,0,0)' }}
-                animate={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-                exit={{ backgroundColor: 'rgba(0,0,0,0)' }}
-                onClick={handleCollapse}
-              >
-                <motion.div
-                  className="w-[85vw] max-w-sm"
-                  style={{ aspectRatio: '3/4' }}
-                  onClick={e => e.stopPropagation()}
-                >
-                  <SwipeableCard
-                    cardId={expandedCard.id}
-                    onDragUpdate={setDragX}
-                    onDragEnd={(info, id) => handleDragEnd(undefined, info, id)}
-                  >
-                    <CardFront
-                      emoji={expandedCard.emoji}
-                      title={expandedCard.title}
-                      description={expandedCard.description}
-                      value={expandedCard.value}
-                      color={expandedCard.color}
-                      onFlip={handleCollapse}
-                    />
-                  </SwipeableCard>
-                </motion.div>
+                </div>
               </motion.div>
-            )}
-          </AnimatePresence>
-        </LayoutGroup>
+            )
+          })}
+        </div>
+
+        <AnimatePresence>
+          {expandedCard && (
+            <motion.div
+              key="card-overlay"
+              className="fixed inset-0 z-50 flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+              initial={{ backgroundColor: 'rgba(0,0,0,0)' }}
+              animate={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+              exit={{ backgroundColor: 'rgba(0,0,0,0)' }}
+              onClick={handleCollapse}
+            >
+              <motion.div
+                className="w-[85vw] max-w-sm"
+                style={{ aspectRatio: '3/4' }}
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.85, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                onClick={e => e.stopPropagation()}
+              >
+                <SwipeableCard
+                  cardId={expandedCard.id}
+                  onDragUpdate={setDragX}
+                  onDragEnd={(info, id) => handleDragEnd(undefined, info, id)}
+                >
+                  <CardFront
+                    emoji={expandedCard.emoji}
+                    title={expandedCard.title}
+                    description={expandedCard.description}
+                    value={expandedCard.value}
+                    color={expandedCard.color}
+                    onFlip={handleCollapse}
+                  />
+                </SwipeableCard>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {game.hand.length === 0 && game.totalQuests === 0 && (
           <div className="text-center py-4">

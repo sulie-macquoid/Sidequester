@@ -98,7 +98,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
   return (
     <>
       <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-        <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} style={{ color: 'var(--text-primary)' }}>
               <ArrowLeft size={20} />
