@@ -20,11 +20,11 @@ export default defineConfig({
         background_color: '#0F0F1A',
         display: 'standalone',
         orientation: 'portrait',
-        scope: '/',
-        start_url: '/',
+        scope: '/Sidequester/',
+        start_url: '/Sidequester/',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/Sidequester/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/Sidequester/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       workbox: {

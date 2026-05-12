@@ -20,7 +20,7 @@ export default function MenuScreen({ onPlay, onEdit }: Props) {
           transition={{ duration: 0.3 }}
           className="text-center"
         >
-          <img src="/cattt.webp" alt="Sully" className="w-auto h-32 object-contain mx-auto mb-4" />
+          <img src={`${import.meta.env.BASE_URL}cattt.webp`} alt="Sully" className="w-auto h-32 object-contain mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-10" style={{ color: 'var(--text-primary)' }}>
             Sully's Sidequests
           </h1>
