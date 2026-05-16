@@ -39,8 +39,9 @@ function SwipeableCard({
   return (
     <motion.div
       drag="x"
-      dragElastic={0.4}
+      dragElastic={0.6}
       dragSnapToOrigin
+      dragMomentum={false}
       style={{ x: dragX, rotate: dragRotate, width: '100%', height: '100%' } as any}
       onDrag={(_, info) => onDragUpdate(info.offset.x)}
       onDragEnd={(_, info) => onDragEnd(info, cardId)}
@@ -136,11 +137,13 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     if (navigator.vibrate) navigator.vibrate(10)
   }
 
+  const SWIPE_THRESHOLD = 80
+
   const handleDragEnd = (_: any, info: PanInfo, cardId: string) => {
     setDragX(0)
-    if (info.offset.x > 150) {
+    if (info.offset.x > SWIPE_THRESHOLD) {
       handleComplete(cardId)
-    } else if (info.offset.x < -150) {
+    } else if (info.offset.x < -SWIPE_THRESHOLD) {
       handleDiscard(cardId)
     }
   }

@@ -11,7 +11,7 @@ export default function CardFront({ emoji, title, description, value, color, onF
   return (
     <div
       onClick={onFlip}
-      className="w-full h-full rounded-2xl flex flex-col cursor-pointer relative overflow-hidden touch-none select-none"
+      className="w-full h-full rounded-2xl flex flex-col cursor-grab active:cursor-grabbing relative overflow-hidden"
       style={{ backgroundColor: 'var(--surface)' }}
     >
       <div

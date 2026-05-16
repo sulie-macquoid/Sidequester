@@ -369,6 +369,11 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
 
           <div className="p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--bg)' }}>
             <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Example:</div>
+            <div className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>Header row (column names):</div>
+            <code className="block text-xs leading-relaxed" style={{ color: '#FECA57' }}>
+              title,description,value,emoji,color
+            </code>
+            <div className="text-xs mt-2 mb-1" style={{ color: 'var(--text-secondary)' }}>Data row:</div>
             <code className="block text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               Go to Oman,Visit the greatest nation in the world,500,🇴🇲,#DC143C
             </code>

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { SettingsProvider } from './context/SettingsContext'
 import { ThemeProvider } from './components/ThemeProvider'
@@ -69,24 +69,43 @@ export default function App() {
 
   const variants = pageVariants[viewTransition]
   const isGame = view === 'game'
+  const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
+  const isSwiping = useRef(false)
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (e.touches[0].clientX > 40) return
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+    isSwiping.current = false
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (touchStartX.current > 40) return
+    const dx = e.touches[0].clientX - touchStartX.current
+    const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
+    if (dy > dx) { isSwiping.current = false; return }
+    if (dx > 30) isSwiping.current = true
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    if (isSwiping.current) goBack()
+    isSwiping.current = false
+    touchStartX.current = 0
+    touchStartY.current = 0
+  }, [goBack])
 
   return (
     <ErrorBoundary currentView={view}>
       <SettingsProvider>
       <ThemeProvider>
-        <div className="flex-1 flex flex-col min-h-dvh" style={{ backgroundColor: 'var(--bg)' }}>
-          {!isGame && (
-            <motion.div
-              drag="x"
-              dragConstraints={{ left: 0, right: 100 }}
-              dragElastic={0.5}
-              onDragEnd={(_, info) => {
-                if (info.offset.x > 30) goBack()
-              }}
-              className="fixed left-0 top-0 bottom-0 w-16 z-30"
-              style={{ touchAction: 'none' }}
-            />
-          )}
+        <div
+          className="flex-1 flex flex-col min-h-dvh"
+          style={{ backgroundColor: 'var(--bg)' }}
+          onTouchStart={!isGame ? handleTouchStart : undefined}
+          onTouchMove={!isGame ? handleTouchMove : undefined}
+          onTouchEnd={!isGame ? handleTouchEnd : undefined}
+        >
           <AnimatePresence mode="wait">
             {view === 'menu' && (
               <motion.div

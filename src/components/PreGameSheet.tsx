@@ -25,7 +25,10 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
 
   useEffect(() => {
     if (deckId) {
-      getActiveSession(deckId).then(s => setExistingSession(s ?? null))
+      getActiveSession(deckId).then(s => {
+        setExistingSession(s ?? null)
+        setStep(s ? 'session' : 'settings')
+      })
       const saved = savedSettings
       if (saved) {
         setTimeEnabled(saved.timeConstraintEnabled)
@@ -36,7 +39,6 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
         setTimeInput(String(Math.floor(DEFAULT_GAME_SETTINGS.timeLimitSeconds / 60)))
         setPermanentDiscard(DEFAULT_GAME_SETTINGS.permanentDiscard)
       }
-      setStep(existingSession ? 'session' : 'settings')
     }
   }, [deckId])
 

@@ -81,7 +81,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             <div className="text-xs italic" style={{ color: 'var(--text-secondary)' }}>
               vibecoded by Sulaiman &quot;Bossman&quot; Al Harthy
             </div>
-            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.5.1</div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.5.2</div>
 
           <div>
             <label className="text-sm font-medium block mb-2" style={{ color: 'var(--text-primary)' }}>
