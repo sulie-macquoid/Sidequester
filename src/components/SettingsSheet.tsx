@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import { X, Plus } from 'lucide-react'
+import { X, Plus, Share2 } from 'lucide-react'
 import { useSettings } from '../context/SettingsContext'
 import DebugSheet from './DebugSheet'
 import ColorSwatches from './ColorSwatches'
@@ -47,6 +47,14 @@ export default function SettingsSheet({ open, onClose }: Props) {
   const customEmojis = settings.customEmojis || []
   const removedEmojis = settings.disabledEmojis || []
   const allEmojis = [...DEFAULT_EMOJIS, ...customEmojis].filter(e => !removedEmojis.includes(e))
+  const [copied, setCopied] = useState(false)
+
+  const handleShareLink = async () => {
+    const url = `${window.location.origin}/Sidequester/`
+    await navigator.clipboard.writeText(url)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   if (!open) return null
 
@@ -81,7 +89,25 @@ export default function SettingsSheet({ open, onClose }: Props) {
             <div className="text-xs italic" style={{ color: 'var(--text-secondary)' }}>
               vibecoded by Sulaiman &quot;Bossman&quot; Al Harthy
             </div>
-            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.5.2</div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.5.3</div>
+            <div className="relative inline-block">
+              <button
+                onClick={handleShareLink}
+                className="flex items-center gap-1 text-xs mt-1"
+                style={{ color: '#54A0FF' }}
+              >
+                <Share2 size={12} />
+                Share
+              </button>
+              {copied && (
+                <span
+                  className="absolute -top-6 left-0 text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap"
+                  style={{ backgroundColor: '#54A0FF', color: 'white' }}
+                >
+                  Copied to clipboard!
+                </span>
+              )}
+            </div>
 
           <div>
             <label className="text-sm font-medium block mb-2" style={{ color: 'var(--text-primary)' }}>

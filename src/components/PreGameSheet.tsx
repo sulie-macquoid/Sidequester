@@ -3,7 +3,7 @@ import { motion } from 'motion/react'
 import { X, RotateCcw, Play } from 'lucide-react'
 import type { Session, GameSettings } from '../types'
 import { DEFAULT_GAME_SETTINGS } from '../types'
-import { getActiveSession } from '../db/stores'
+import { getActiveSession, saveSession } from '../db/stores'
 import { useSettings } from '../context/SettingsContext'
 
 interface Props {
@@ -56,7 +56,11 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
     onStart(deckId, gameSettings, true)
   }
 
-  const handleReset = () => {
+  const handleReset = async () => {
+    if (existingSession) {
+      await saveSession({ ...existingSession, isActive: false })
+    }
+    setExistingSession(null)
     setStep('settings')
   }
 

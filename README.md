@@ -13,13 +13,12 @@ A personal quest-generator PWA — swipe through a hand of cards, complete sideq
 - **Session persistence** — Unfinished games resume across tab closes
 - **PWA** — Install on home screen, works offline, portrait standalone mode
 
-## 📦 Latest Release — v1.5.2
+## 📦 Latest Release — v1.5.3
 
-- Fixed example CSV to show header row + data row with required `title` column
-- Fixed swipe back gesture — replaced with custom touch handler, no longer conflicts with scrolling
-- Fixed PreGameSheet not detecting active sessions (stale state bug)
-- Fixed card swipe zone — drag now works when touching anywhere on the card, not just the edge
-- Lowered swipe threshold, removed touch-action conflicts
+- Share link in settings — copies the game URL to clipboard with "Copied!" toast
+- Fixed reset from continue game popup now properly deactivates the session
+- Reset deck in game now shows game settings popup to apply new settings
+- Cards remaining count displayed in game header
 - Bug fixes and polish
 
 ## 🚀 Quick Start

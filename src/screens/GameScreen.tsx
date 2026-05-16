@@ -56,10 +56,14 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   const timer = useTimer()
   const [showCompleted, setShowCompleted] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [showSettingsAfterReset, setShowSettingsAfterReset] = useState(false)
   const [started, setStarted] = useState(false)
   const [scoreAnim, setScoreAnim] = useState(false)
   const [dragX, setDragX] = useState(0)
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null)
+  const [resetTimeEnabled, setResetTimeEnabled] = useState(false)
+  const [resetTimeInput, setResetTimeInput] = useState('30')
+  const [resetPermanentDiscard, setResetPermanentDiscard] = useState(false)
   const timerRef = useRef(timer)
   timerRef.current = timer
 
@@ -156,13 +160,26 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     setExpandedCardId(null)
   }
 
-  const handleReset = () => {
+  const handleResetConfirm = () => {
     game.resetGame()
     timer.reset()
     setShowResetConfirm(false)
     setStarted(false)
     setExpandedCardId(null)
-    game.startGame(deckId, gameSettings ?? undefined)
+    setResetTimeEnabled(game.gameSettings?.timeConstraintEnabled ?? false)
+    setResetTimeInput(String(Math.floor(game.gameSettings?.timeLimitSeconds ?? 1800) / 60))
+    setResetPermanentDiscard(game.gameSettings?.permanentDiscard ?? false)
+    setShowSettingsAfterReset(true)
+  }
+
+  const handleApplySettings = () => {
+    const newSettings: GameSettings = {
+      timeConstraintEnabled: resetTimeEnabled,
+      timeLimitSeconds: (parseInt(resetTimeInput, 10) || 30) * 60,
+      permanentDiscard: resetPermanentDiscard,
+    }
+    game.startGame(deckId, newSettings)
+    setShowSettingsAfterReset(false)
     setTimeout(() => {
       setStarted(true)
       timer.start()
@@ -188,18 +205,22 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
           </motion.button>
         </div>
 
-        <div className="flex items-center gap-3 text-sm">
+        <div className="flex items-center gap-2 text-xs">
           <motion.span
             animate={scoreAnim ? { scale: [1, 1.3, 1] } : {}}
             transition={{ duration: 0.2 }}
-            className="font-bold"
+            className="font-bold text-sm"
             style={{ color: '#FECA57' }}
           >
             {game.score}
           </motion.span>
-          <span style={{ color: 'var(--text-secondary)' }}>•</span>
+          <span style={{ color: 'var(--text-secondary)' }}>|</span>
           <span style={{ color: 'var(--text-secondary)' }}>
             {completedCount}/{game.totalQuests}
+          </span>
+          <span style={{ color: 'var(--text-secondary)' }}>•</span>
+          <span style={{ color: 'var(--text-secondary)' }}>
+            {game.totalQuests - completedCount} left
           </span>
           <span style={{ color: 'var(--text-secondary)' }}>•</span>
           <span
@@ -334,7 +355,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
               Cancel
             </button>
             <button
-              onClick={handleReset}
+              onClick={handleResetConfirm}
               className="flex-1 py-2.5 rounded-xl text-sm font-medium"
               style={{ backgroundColor: '#DC143C', color: 'white' }}
             >
@@ -346,6 +367,89 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
           This will reshuffle all cards and reset your score and timer.
         </p>
+      </BottomSheet>
+
+      <BottomSheet
+        open={showSettingsAfterReset}
+        onClose={() => setShowSettingsAfterReset(false)}
+        title="Game Settings"
+        footer={
+          <button
+            onClick={handleApplySettings}
+            className="w-full py-3 rounded-xl text-sm font-medium disabled:opacity-50"
+            style={{ backgroundColor: '#54A0FF', color: 'white' }}
+          >
+            Start Game
+          </button>
+        }
+      >
+        <div className="space-y-5">
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setResetPermanentDiscard(!resetPermanentDiscard)}
+                className="w-10 h-6 rounded-full relative transition-colors shrink-0"
+                style={{ backgroundColor: resetPermanentDiscard ? '#54A0FF' : 'var(--bg)' }}
+              >
+                <div
+                  className="w-4 h-4 rounded-full absolute top-1 transition-transform"
+                  style={{
+                    backgroundColor: 'white',
+                    transform: resetPermanentDiscard ? 'translateX(20px)' : 'translateX(4px)',
+                  }}
+                />
+              </div>
+              <div>
+                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Permanent Discard
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                  Discarded cards never reappear this session
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setResetTimeEnabled(!resetTimeEnabled)}
+                className="w-10 h-6 rounded-full relative transition-colors shrink-0"
+                style={{ backgroundColor: resetTimeEnabled ? '#54A0FF' : 'var(--bg)' }}
+              >
+                <div
+                  className="w-4 h-4 rounded-full absolute top-1 transition-transform"
+                  style={{
+                    backgroundColor: 'white',
+                    transform: resetTimeEnabled ? 'translateX(20px)' : 'translateX(4px)',
+                  }}
+                />
+              </div>
+              <div>
+                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Time Constraint
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                  Game ends when the timer runs out
+                </div>
+              </div>
+            </label>
+            {resetTimeEnabled && (
+              <div className="flex items-center gap-2 mt-3 ml-[52px]">
+                <input
+                  type="number"
+                  value={resetTimeInput}
+                  onChange={(e) => setResetTimeInput(e.target.value)}
+                  min={1}
+                  max={999}
+                  className="w-20 px-3 py-2 rounded-lg text-lg font-semibold text-center outline-none"
+                  style={{ backgroundColor: 'var(--bg)', color: '#FECA57' }}
+                />
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>minutes</span>
+              </div>
+            )}
+          </div>
+        </div>
       </BottomSheet>
 
       <CompletedPopup
