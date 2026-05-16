@@ -367,6 +367,13 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
             </div>
           </div>
 
+          <div className="p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--bg)' }}>
+            <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Example:</div>
+            <code className="block text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              Go to Oman,Visit the greatest nation in the world,500,🇴🇲,#DC143C
+            </code>
+          </div>
+
           <div
             onClick={() => fileInputRef.current?.click()}
             className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:opacity-80 transition-opacity"

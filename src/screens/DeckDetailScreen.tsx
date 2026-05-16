@@ -26,6 +26,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
   const [createOpen, setCreateOpen] = useState(false)
   const [editQuest, setEditQuest] = useState<Quest | null>(null)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+  const [showImportInfo, setShowImportInfo] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<ParsedQuestRow[]>([])
   const [importError, setImportError] = useState<string | null>(null)
@@ -110,7 +111,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
           <div className="flex items-center gap-2">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setShowImportInfo(true)}
               className="p-2 rounded-lg"
               style={{ color: 'var(--text-primary)' }}
             >
@@ -278,7 +279,11 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
           <label className="text-sm font-medium block mb-1" style={{ color: 'var(--text-primary)' }}>Point Value</label>
           <div className="flex items-center gap-2 w-full">
             <button
-              onClick={() => setFormValue(Math.max(0, formValue - 10))}
+              onClick={() => {
+                const v = Math.max(0, formValue - 10)
+                setFormValue(v)
+                setPointInput(String(v))
+              }}
               className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
               style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)' }}
             >
@@ -305,7 +310,11 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
               style={{ backgroundColor: 'var(--bg)', color: '#FECA57' }}
             />
             <button
-              onClick={() => setFormValue(Math.min(500, formValue + 10))}
+              onClick={() => {
+                const v = Math.min(500, formValue + 10)
+                setFormValue(v)
+                setPointInput(String(v))
+              }}
               className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
               style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)' }}
             >
@@ -316,6 +325,50 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
         <div>
           <label className="text-sm font-medium block mb-1" style={{ color: 'var(--text-primary)' }}>Color</label>
           <ColorSwatches selected={formColor} onSelect={setFormColor} />
+        </div>
+      </BottomSheet>
+
+      <BottomSheet
+        open={showImportInfo}
+        onClose={() => setShowImportInfo(false)}
+        title="Import Quests"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            Import quests from a <strong style={{ color: 'var(--text-primary)' }}>.csv</strong> file.
+            The CSV must have at least a <code style={{ color: '#FECA57' }}>title</code> column.
+          </p>
+
+          <div className="p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--bg)' }}>
+            <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Required columns:</div>
+            <code className="block text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              title,description,value,emoji,color
+            </code>
+            <div className="mt-2 space-y-1">
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>title</span> <span style={{ color: 'var(--text-secondary)' }}>— Quest name (required)</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>description</span> <span style={{ color: 'var(--text-secondary)' }}>— What to do</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>value</span> <span style={{ color: 'var(--text-secondary)' }}>— Point value (default 50)</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>emoji</span> <span style={{ color: 'var(--text-secondary)' }}>— Icon emoji</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>color</span> <span style={{ color: 'var(--text-secondary)' }}>— Hex color</span></div>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--bg)' }}>
+            <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Example:</div>
+            <code className="block text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              Go to Oman,Visit the greatest nation in the world,500,🇴🇲,#DC143C
+            </code>
+          </div>
+
+          <div
+            onClick={() => { setShowImportInfo(false); setTimeout(() => fileInputRef.current?.click(), 300) }}
+            className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
+          >
+            <div className="text-3xl mb-2">📂</div>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Choose a CSV file</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Tap to browse</p>
+          </div>
         </div>
       </BottomSheet>
 

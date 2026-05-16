@@ -78,13 +78,13 @@ export default function App() {
           {!isGame && (
             <motion.div
               drag="x"
-              dragConstraints={{ left: 0, right: 60 }}
-              dragElastic={0.3}
+              dragConstraints={{ left: 0, right: 100 }}
+              dragElastic={0.5}
               onDragEnd={(_, info) => {
-                if (info.offset.x > 40) goBack()
+                if (info.offset.x > 30) goBack()
               }}
-              className="fixed left-0 top-0 bottom-0 w-8 z-30"
-              style={{ touchAction: 'pan-y' }}
+              className="fixed left-0 top-0 bottom-0 w-16 z-30"
+              style={{ touchAction: 'none' }}
             />
           )}
           <AnimatePresence mode="wait">

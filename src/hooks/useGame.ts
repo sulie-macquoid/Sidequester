@@ -256,6 +256,16 @@ export function useGame() {
     setGameSettings(null)
   }, [saveSession])
 
+  const endGame = useCallback(async () => {
+    if (sessionRef.current) {
+      await saveSession({
+        ...sessionRef.current,
+        isActive: false,
+      })
+    }
+    setGameOver(true)
+  }, [saveSession])
+
   return {
     hand,
     flippedIds,
@@ -271,5 +281,6 @@ export function useGame() {
     discardQuest,
     saveTimer,
     resetGame,
+    endGame,
   }
 }

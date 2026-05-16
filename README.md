@@ -13,15 +13,13 @@ A personal quest-generator PWA — swipe through a hand of cards, complete sideq
 - **Session persistence** — Unfinished games resume across tab closes
 - **PWA** — Install on home screen, works offline, portrait standalone mode
 
-## 📦 Latest Release — v1.5.0
+## 📦 Latest Release — v1.5.1
 
-- Pre-game settings with time constraint and permanent discard toggles
-- Unfinished games prompt to continue or reset
-- Absolute countdown timer persists across tab closes
-- Export decks as CSV, import with format guide and file drop zone
-- iOS-style swipe back gesture on non-game screens
-- Beautified card backs with improved layout and typography
-- Native share sheet on deck complete screen
+- Fixed timer countdown in time constraint mode (game now ends when time expires)
+- Fixed swipe back gesture — wider zone, more responsive
+- Fixed +/- point buttons updating the displayed value in real-time
+- Importing into an existing deck now shows the instructions page first
+- Added sample CSV quest example in import instructions
 - Bug fixes and polish
 
 ## 🚀 Quick Start
@@ -70,4 +68,4 @@ src/
 - lucide-react (icons)
 
 ---
-*vibecoded by Sulaiman "Bossman" al harthy*
+*vibecoded by Sulaiman "Bossman" Al Harthy*

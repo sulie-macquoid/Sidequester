@@ -111,7 +111,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
       if (remaining <= 0) {
         if (!game.gameOver) {
           timer.pause()
-          game.resetGame()
+          game.endGame()
         }
       }
     }, 1000)
