@@ -33,11 +33,11 @@ export default function UpdatePopup({ open, onClose }: Props) {
         onClick={onClose}
       >
         <motion.div
-          className="w-full max-w-sm rounded-2xl p-5"
-          style={{ backgroundColor: 'var(--surface)' }}
+          className="w-full max-w-sm rounded-2xl flex flex-col"
+          style={{ backgroundColor: 'var(--surface)', maxHeight: '70vh' }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between p-5 pb-0 shrink-0">
             <div>
               <h2 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
                 New Updates
@@ -51,22 +51,26 @@ export default function UpdatePopup({ open, onClose }: Props) {
             </button>
           </div>
 
-          <ul className="space-y-2 mb-5">
-            {latest.items.map((item, i) => (
-              <li key={i} className="flex gap-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                <span style={{ color: '#54A0FF' }}>✦</span>
-                <span>{item}</span>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-y-auto p-5">
+            <ul className="space-y-2">
+              {latest.items.map((item, i) => (
+                <li key={i} className="flex gap-2 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  <span style={{ color: '#54A0FF' }}>✦</span>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-          <button
-            onClick={onClose}
-            className="w-full py-3 rounded-xl text-sm font-medium"
-            style={{ backgroundColor: '#54A0FF', color: 'white' }}
-          >
-            Got it!
-          </button>
+          <div className="p-5 pt-0 shrink-0">
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl text-sm font-medium"
+              style={{ backgroundColor: '#54A0FF', color: 'white' }}
+            >
+              Got it!
+            </button>
+          </div>
         </motion.div>
       </motion.div>
     </>
