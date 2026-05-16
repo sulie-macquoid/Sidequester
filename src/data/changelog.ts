@@ -22,6 +22,7 @@ export const CHANGELOG: ReleaseEntry[] = [
       'CSV download works on iOS Safari (delayed revokeObjectURL)',
       'Android adaptive icons (maskable)',
       'Input validation, color validation, accessibility improvements',
+      'Bottom sheets spring back on partial swipe (dragSnapToOrigin)',
     ],
   },
   {
