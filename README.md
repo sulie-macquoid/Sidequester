@@ -69,10 +69,5 @@ src/
 - idb (IndexedDB wrapper)
 - lucide-react (icons)
 
-## 📝 Keeping README Updated
-
-When adding new features, update the **Features** section above so this README always reflects the current state of the app.
-
 ---
-
 *vibecoded by Sulaiman "Bossman" al harthy*
