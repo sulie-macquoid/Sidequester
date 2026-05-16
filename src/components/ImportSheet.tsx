@@ -67,11 +67,11 @@ export default function ImportSheet({ open, rows, decks, defaultDeckId, onClose,
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[85vh] flex flex-col max-w-md mx-auto"
         style={{ backgroundColor: 'var(--surface)' }}
       >
-        <div className="flex items-center justify-between p-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between p-4 border-b shrink-0 min-h-[52px]" style={{ borderColor: 'var(--border)' }}>
           <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
             📥 Import {rows.length} Quest{rows.length !== 1 ? 's' : ''}
           </h2>
-          <button onClick={onClose} style={{ color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
             <X size={20} />
           </button>
         </div>
@@ -122,16 +122,17 @@ export default function ImportSheet({ open, rows, decks, defaultDeckId, onClose,
                           value={newName}
                           onChange={(e) => setNewName(e.target.value)}
                           placeholder="Deck name"
-                          className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                          style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
+                          className="w-full px-3 py-2 rounded-lg outline-none"
+                          style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)', fontSize: '16px' }}
+                          autoFocus
                         />
                         <input
                           type="text"
                           value={newDesc}
                           onChange={(e) => setNewDesc(e.target.value)}
                           placeholder="Ready to play"
-                          className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-                          style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
+                          className="w-full px-3 py-2 rounded-lg outline-none"
+                          style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)', fontSize: '16px' }}
                         />
                         <EmojiPicker selected={newEmoji} onSelect={setNewEmoji} />
                         <ColorSwatches selected={newColor} onSelect={setNewColor} />
@@ -168,10 +169,10 @@ export default function ImportSheet({ open, rows, decks, defaultDeckId, onClose,
           </div>
         </div>
 
-        <div className="p-4 border-t shrink-0 flex gap-3" style={{ borderColor: 'var(--border)' }}>
+        <div className="p-4 border-t shrink-0 flex gap-3 min-h-[52px]" style={{ borderColor: 'var(--border)' }}>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium"
+            className="flex-1 py-3 rounded-xl text-sm font-medium min-h-[44px]"
             style={{ backgroundColor: 'var(--bg)', color: 'var(--text-secondary)' }}
           >
             Cancel
@@ -179,7 +180,7 @@ export default function ImportSheet({ open, rows, decks, defaultDeckId, onClose,
           <button
             onClick={handleImport}
             disabled={!canImport || importing}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
+            className="flex-1 py-3 rounded-xl text-sm font-medium disabled:opacity-50 min-h-[44px]"
             style={{ backgroundColor: '#54A0FF', color: 'white' }}
           >
             {importing ? 'Importing...' : `Import ${rows.length} Quest${rows.length !== 1 ? 's' : ''}`}

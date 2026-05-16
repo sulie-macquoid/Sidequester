@@ -30,7 +30,7 @@ export default function MenuScreen({ onPlay, onEdit }: Props) {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={onPlay}
-            className="w-full py-4 rounded-2xl font-semibold text-lg shadow-lg"
+            className="w-full py-4 rounded-2xl font-semibold text-lg shadow-lg min-h-[60px]"
             style={{ backgroundColor: '#54A0FF', color: 'white' }}
           >
             PLAY
@@ -39,7 +39,7 @@ export default function MenuScreen({ onPlay, onEdit }: Props) {
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={onEdit}
-            className="w-full py-4 rounded-2xl font-semibold text-lg"
+            className="w-full py-4 rounded-2xl font-semibold text-lg min-h-[60px]"
             style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
           >
             EDIT
@@ -48,7 +48,7 @@ export default function MenuScreen({ onPlay, onEdit }: Props) {
 
         <button
           onClick={() => setSettingsOpen(true)}
-          className="absolute bottom-8 right-6 p-3 rounded-full"
+          className="absolute bottom-8 right-6 p-3 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center"
           style={{ color: 'var(--text-secondary)' }}
         >
           <Settings size={24} />

@@ -4,6 +4,11 @@ export function pickWeighted(quests: Quest[], weights: Record<string, number>): 
   if (quests.length === 0) return null
 
   const totalWeight = quests.reduce((sum, q) => sum + (weights[q.id] ?? 1), 0)
+  if (totalWeight <= 0) {
+    console.warn('pickWeighted: all quests have zero weight, returning null')
+    return null
+  }
+
   let random = Math.random() * totalWeight
 
   for (const q of quests) {
@@ -27,9 +32,10 @@ export function resetWeightsIfCycleComplete(
   deckQuestIds: string[],
   drawnQuestIds: string[]
 ): Record<string, number> {
-  const allDrawn = deckQuestIds.every(id => drawnQuestIds.includes(id))
+  const activeIds = deckQuestIds.filter(id => id in weights)
+  const allDrawn = activeIds.length > 0 && activeIds.every(id => drawnQuestIds.includes(id))
   if (allDrawn) {
-    return Object.fromEntries(deckQuestIds.map(id => [id, 1]))
+    return Object.fromEntries(activeIds.map(id => [id, 1]))
   }
   return weights
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence, useMotionValue, useTransform, type PanInfo } from 'motion/react'
 import { ArrowLeft, RotateCcw } from 'lucide-react'
 import { useGame } from '../hooks/useGame'
@@ -35,6 +35,7 @@ function SwipeableCard({
 }) {
   const dragX = useMotionValue(0)
   const dragRotate = useTransform(dragX, [-300, 0, 300], [-15, 0, 15])
+  const wasDragged = useRef(false)
 
   return (
     <motion.div
@@ -42,11 +43,17 @@ function SwipeableCard({
       dragElastic={0.6}
       dragSnapToOrigin
       dragMomentum={false}
-      style={{ x: dragX, rotate: dragRotate, width: '100%', height: '100%' } as any}
-      onDrag={(_, info) => onDragUpdate(info.offset.x)}
-      onDragEnd={(_, info) => onDragEnd(info, cardId)}
+      style={{ x: dragX, rotate: dragRotate, width: '100%', height: '100%' }}
+      onDrag={(_, info) => {
+        if (Math.abs(info.offset.x) > 10) wasDragged.current = true
+        onDragUpdate(info.offset.x)
+      }}
+      onDragEnd={(_, info) => {
+        wasDragged.current = true
+        onDragEnd(info, cardId)
+      }}
     >
-      {children}
+      {React.cloneElement(children as React.ReactElement<any>, { dragging: wasDragged.current })}
     </motion.div>
   )
 }
@@ -66,6 +73,8 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   const [resetPermanentDiscard, setResetPermanentDiscard] = useState(false)
   const timerRef = useRef(timer)
   timerRef.current = timer
+  const startedRef = useRef(false)
+  const gameOverHandled = useRef(false)
 
   useEffect(() => {
     game.startGame(deckId, gameSettings ?? undefined)
@@ -75,6 +84,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   useEffect(() => {
     if (game.session && !started) {
       setStarted(true)
+      startedRef.current = true
       if (game.gameSettings?.timeConstraintEnabled && game.session.startedAt) {
         const endTime = game.session.startedAt + game.gameSettings.timeLimitSeconds * 1000
         const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000))
@@ -88,21 +98,28 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   }, [game.session])
 
   useEffect(() => {
-    if (game.gameOver && started) {
+    if (game.gameOver && started && !gameOverHandled.current) {
+      gameOverHandled.current = true
       timer.pause()
-      setTimeout(() => onComplete({
+      const timeout = setTimeout(() => onComplete({
         score: game.score,
         completedCount: game.completedEntries.length,
         elapsedSeconds: timer.elapsed,
         totalQuests: game.totalQuests,
         timeLimitSeconds: game.gameSettings?.timeConstraintEnabled ? game.gameSettings.timeLimitSeconds : undefined,
       }), 600)
+      return () => clearTimeout(timeout)
+    }
+    if (!game.gameOver) {
+      gameOverHandled.current = false
     }
   }, [game.gameOver])
 
   useEffect(() => {
     const interval = setInterval(() => {
-      game.saveTimer(timerRef.current.elapsed)
+      if (timerRef.current.running) {
+        game.saveTimer(timerRef.current.elapsed)
+      }
     }, 5000)
     return () => clearInterval(interval)
   }, [])
@@ -165,6 +182,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     timer.reset()
     setShowResetConfirm(false)
     setStarted(false)
+    startedRef.current = false
     setExpandedCardId(null)
     setResetTimeEnabled(game.gameSettings?.timeConstraintEnabled ?? false)
     setResetTimeInput(String(Math.floor(game.gameSettings?.timeLimitSeconds ?? 1800) / 60))
@@ -180,10 +198,6 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     }
     game.startGame(deckId, newSettings)
     setShowSettingsAfterReset(false)
-    setTimeout(() => {
-      setStarted(true)
-      timer.start()
-    }, 100)
   }
 
   const completedCount = game.completedEntries.length
@@ -196,12 +210,15 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   const remainingSeconds = isTimeConstraint
     ? Math.max(0, Math.floor((endTimeMs - Date.now()) / 1000))
     : 0
+
+  const GLOW_THRESHOLD = 80
+
   return (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
+      <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 min-h-[52px]" style={{ backgroundColor: 'var(--bezel)' }}>
         <div className="flex items-center gap-2">
-          <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} style={{ color: 'var(--text-primary)' }}>
-            <ArrowLeft size={18} />
+          <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-primary)' }}>
+            <ArrowLeft size={20} />
           </motion.button>
         </div>
 
@@ -237,14 +254,14 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
           className="fixed top-0 bottom-0 left-0 w-2 z-50 pointer-events-none transition-opacity duration-150"
           style={{
             background: 'linear-gradient(to right, rgba(220,20,60,0.5), transparent)',
-            opacity: dragX < -20 ? Math.min(1, Math.abs(dragX) / 150) : 0,
+            opacity: dragX < -10 ? Math.min(1, Math.abs(dragX) / GLOW_THRESHOLD) : 0,
           }}
         />
         <div
           className="fixed top-0 bottom-0 right-0 w-2 z-50 pointer-events-none transition-opacity duration-150"
           style={{
             background: 'linear-gradient(to left, rgba(46,213,115,0.5), transparent)',
-            opacity: dragX > 20 ? Math.min(1, dragX / 150) : 0,
+            opacity: dragX > 10 ? Math.min(1, dragX / GLOW_THRESHOLD) : 0,
           }}
         />
 
@@ -326,7 +343,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
       <div className="px-4 pb-6 pt-1 flex justify-center gap-3">
         <button
           onClick={() => setShowResetConfirm(true)}
-          className="px-4 py-2 rounded-xl text-xs font-medium"
+          className="px-4 py-2.5 rounded-xl text-xs font-medium min-h-[44px]"
           style={{ backgroundColor: 'rgba(220,20,60,0.15)', color: '#DC143C' }}
         >
           <RotateCcw size={14} className="inline mr-1" />
@@ -334,7 +351,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
         </button>
         <button
           onClick={() => setShowCompleted(true)}
-          className="px-4 py-2 rounded-xl text-xs font-medium"
+          className="px-4 py-2.5 rounded-xl text-xs font-medium min-h-[44px]"
           style={{ backgroundColor: 'var(--surface)', color: 'var(--text-secondary)' }}
         >
           Show Completed ({completedCount})
@@ -349,14 +366,14 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
           <>
             <button
               onClick={() => setShowResetConfirm(false)}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium"
+              className="flex-1 py-3 rounded-xl text-sm font-medium min-h-[44px]"
               style={{ backgroundColor: 'var(--bg)', color: 'var(--text-secondary)' }}
             >
               Cancel
             </button>
             <button
               onClick={handleResetConfirm}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium"
+              className="flex-1 py-3 rounded-xl text-sm font-medium min-h-[44px]"
               style={{ backgroundColor: '#DC143C', color: 'white' }}
             >
               Reset
@@ -376,7 +393,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
         footer={
           <button
             onClick={handleApplySettings}
-            className="w-full py-3 rounded-xl text-sm font-medium disabled:opacity-50"
+            className="w-full py-3 rounded-xl text-sm font-medium disabled:opacity-50 min-h-[44px]"
             style={{ backgroundColor: '#54A0FF', color: 'white' }}
           >
             Start Game
@@ -438,12 +455,14 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
               <div className="flex items-center gap-2 mt-3 ml-[52px]">
                 <input
                   type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={resetTimeInput}
                   onChange={(e) => setResetTimeInput(e.target.value)}
                   min={1}
                   max={999}
                   className="w-20 px-3 py-2 rounded-lg text-lg font-semibold text-center outline-none"
-                  style={{ backgroundColor: 'var(--bg)', color: '#FECA57' }}
+                  style={{ backgroundColor: 'var(--bg)', color: '#FECA57', fontSize: '16px' }}
                 />
                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>minutes</span>
               </div>

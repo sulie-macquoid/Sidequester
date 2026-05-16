@@ -34,12 +34,22 @@ const SettingsContext = createContext<SettingsContextValue | null>(null)
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [settings, setSettingsState] = useState<Settings>(DEFAULT_SETTINGS)
   const [loaded, setLoaded] = useState(false)
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches
+  )
 
   useEffect(() => {
     getSettings().then((s) => {
       setSettingsState(s as Settings)
       setLoaded(true)
     })
+  }, [])
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)')
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
   }, [])
 
   const updateSettings = useCallback(async (patch: Partial<Settings>) => {
@@ -58,8 +68,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const bezelColor = deriveBezelColor(bg)
   const secondaryColor = lum > 0.5 ? '#8C8C80' : '#8B8BA7'
   const borderColor = lum > 0.5 ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.06)'
-  const isDark = settings.theme === 'dark' || (settings.theme === 'system' &&
-    window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const isDark = settings.theme === 'dark' || (settings.theme === 'system' && systemDark)
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings, bg, contrastColor, surfaceColor, bezelColor, secondaryColor, borderColor, isDark, loaded }}>

@@ -28,6 +28,8 @@ export class ErrorBoundary extends Component<Props, State> {
       timestamp: Date.now(),
       view: this.props.currentView ?? 'unknown',
       userAgent: navigator.userAgent,
+    }).catch(() => {
+      console.error('Failed to log error to IndexedDB:', error)
     })
   }
 
@@ -49,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
           </p>
           <button
             onClick={this.handleReset}
-            className="px-6 py-3 rounded-xl font-semibold text-sm"
+            className="px-6 py-3 rounded-xl font-semibold text-sm min-h-[44px]"
             style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
           >
             Restart

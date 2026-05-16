@@ -72,25 +72,32 @@ export default function App() {
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const isSwiping = useRef(false)
+  const touchActive = useRef(false)
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (e.touches[0].clientX > 40) return
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
     isSwiping.current = false
+    touchActive.current = true
   }, [])
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartX.current > 40) return
+    if (!touchActive.current || touchStartX.current > 40) return
     const dx = e.touches[0].clientX - touchStartX.current
     const dy = Math.abs(e.touches[0].clientY - touchStartY.current)
-    if (dy > dx) { isSwiping.current = false; return }
-    if (dx > 30) isSwiping.current = true
+    if (dx < 10 && dy < 10) return
+    if (dy > Math.abs(dx) * 1.5) { touchActive.current = false; return }
+    if (dx > 30) {
+      isSwiping.current = true
+      e.preventDefault()
+    }
   }, [])
 
   const handleTouchEnd = useCallback(() => {
     if (isSwiping.current) goBack()
     isSwiping.current = false
+    touchActive.current = false
     touchStartX.current = 0
     touchStartY.current = 0
   }, [goBack])
@@ -101,7 +108,7 @@ export default function App() {
       <ThemeProvider>
         <div
           className="flex-1 flex flex-col min-h-dvh"
-          style={{ backgroundColor: 'var(--bg)' }}
+          style={{ backgroundColor: 'var(--bg)', touchAction: isGame ? 'auto' : 'pan-y' }}
           onTouchStart={!isGame ? handleTouchStart : undefined}
           onTouchMove={!isGame ? handleTouchMove : undefined}
           onTouchEnd={!isGame ? handleTouchEnd : undefined}

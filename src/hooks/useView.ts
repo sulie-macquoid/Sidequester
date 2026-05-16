@@ -1,9 +1,11 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import type { View } from '../types'
 
 export function useView() {
   const [view, setView] = useState<View>('menu')
   const [viewTransition, setViewTransition] = useState<'forward' | 'back'>('forward')
+  const viewRef = useRef(view)
+  viewRef.current = view
 
   const navigate = useCallback((to: View, direction?: 'forward' | 'back') => {
     setViewTransition(direction ?? 'forward')
@@ -12,7 +14,7 @@ export function useView() {
 
   const goBack = useCallback(() => {
     setViewTransition('back')
-    switch (view) {
+    switch (viewRef.current) {
       case 'deckSelect':
       case 'deckList':
         setView('menu')
@@ -29,7 +31,7 @@ export function useView() {
       default:
         setView('menu')
     }
-  }, [view])
+  }, [])
 
   return { view, setView: navigate, goBack, viewTransition }
 }

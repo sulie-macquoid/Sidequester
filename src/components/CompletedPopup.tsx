@@ -32,11 +32,11 @@ export default function CompletedPopup({ open, entries, onClose }: Props) {
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[70vh] flex flex-col max-w-md mx-auto"
         style={{ backgroundColor: 'var(--surface)' }}
       >
-        <div className="flex items-center justify-between p-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between p-4 border-b shrink-0 min-h-[52px]" style={{ borderColor: 'var(--border)' }}>
           <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
             Completed ({entries.length})
           </h2>
-          <button onClick={onClose} style={{ color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
             <X size={20} />
           </button>
         </div>

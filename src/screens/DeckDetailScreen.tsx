@@ -99,9 +99,9 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
   return (
     <>
       <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 min-h-[52px]" style={{ backgroundColor: 'var(--bezel)' }}>
           <div className="flex items-center gap-2">
-            <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} style={{ color: 'var(--text-primary)' }}>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-primary)' }}>
               <ArrowLeft size={20} />
             </motion.button>
             <span className="font-semibold text-sm truncate max-w-[180px]" style={{ color: 'var(--text-primary)' }}>
@@ -112,7 +112,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setShowImportInfo(true)}
-              className="p-2 rounded-lg"
+              className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
               style={{ color: 'var(--text-primary)' }}
             >
               <Upload size={18} />
@@ -120,7 +120,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={openCreate}
-              className="p-2 rounded-lg"
+              className="p-2 rounded-lg min-w-[44px] min-h-[44px] flex items-center justify-center"
               style={{ color: 'var(--text-primary)' }}
             >
               <Plus size={18} />
@@ -174,14 +174,14 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
                   </span>
                   <button
                     onClick={() => { onDeleteQuest(q.id); setDeleteConfirmId(null) }}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                    className="px-3 py-2 rounded-lg text-xs font-medium min-h-[44px]"
                     style={{ backgroundColor: '#DC143C', color: 'white' }}
                   >
                     Delete
                   </button>
                   <button
                     onClick={() => setDeleteConfirmId(null)}
-                    className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                    className="px-3 py-2 rounded-lg text-xs font-medium min-h-[44px]"
                     style={{ backgroundColor: 'var(--bg)', color: 'var(--text-secondary)' }}
                   >
                     Cancel
@@ -204,7 +204,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
                   <div className="text-sm font-semibold shrink-0" style={{ color: '#FECA57' }}>★{q.value}</div>
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(q.id) }}
-                    className="p-1 rounded-lg ml-1"
+                    className="p-2 rounded-lg ml-1 min-w-[44px] min-h-[44px] flex items-center justify-center"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     <span className="text-sm">✕</span>
@@ -224,7 +224,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
           <>
             <button
               onClick={() => { setCreateOpen(false); setEditQuest(null) }}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium"
+              className="flex-1 py-3 rounded-xl text-sm font-medium min-h-[44px]"
               style={{ backgroundColor: 'var(--bg)', color: 'var(--text-secondary)' }}
             >
               Cancel
@@ -232,7 +232,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
             {editQuest && (
               <button
                 onClick={() => { onDeleteQuest(editQuest.id); setEditQuest(null) }}
-                className="py-2.5 px-4 rounded-xl text-sm font-medium"
+                className="py-3 px-4 rounded-xl text-sm font-medium min-h-[44px]"
                 style={{ backgroundColor: '#DC143C', color: 'white' }}
               >
                 <Trash2 size={16} />
@@ -241,7 +241,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
             <button
               onClick={handleSave}
               disabled={!formTitle.trim()}
-              className="flex-1 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
+              className="flex-1 py-3 rounded-xl text-sm font-medium disabled:opacity-50 min-h-[44px]"
               style={{ backgroundColor: '#54A0FF', color: 'white' }}
             >
               Save
@@ -260,8 +260,9 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
             value={formTitle}
             onChange={(e) => setFormTitle(e.target.value)}
             placeholder="Quest title"
-            className="w-full px-3 py-2 rounded-lg text-sm outline-none"
-            style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)' }}
+            className="w-full px-3 py-2 rounded-lg outline-none"
+            style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)', fontSize: '16px' }}
+            autoFocus
           />
         </div>
         <div>
@@ -284,13 +285,15 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
                 setFormValue(v)
                 setPointInput(String(v))
               }}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+              className="w-11 h-11 rounded-lg flex items-center justify-center text-lg shrink-0 min-w-[44px] min-h-[44px]"
               style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)' }}
             >
               −
             </button>
             <input
               type="number"
+              inputMode="numeric"
+              pattern="[0-9]*"
               value={pointInput}
               onChange={(e) => {
                 setPointInput(e.target.value)
@@ -307,7 +310,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
               min={0}
               max={500}
               className="flex-1 px-3 py-2 rounded-lg text-lg font-semibold text-center outline-none"
-              style={{ backgroundColor: 'var(--bg)', color: '#FECA57' }}
+              style={{ backgroundColor: 'var(--bg)', color: '#FECA57', fontSize: '16px' }}
             />
             <button
               onClick={() => {
@@ -315,7 +318,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
                 setFormValue(v)
                 setPointInput(String(v))
               }}
-              className="w-10 h-10 rounded-lg flex items-center justify-center text-lg shrink-0"
+              className="w-11 h-11 rounded-lg flex items-center justify-center text-lg shrink-0 min-w-[44px] min-h-[44px]"
               style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)' }}
             >
               +
@@ -367,7 +370,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
 
           <div
             onClick={() => { setShowImportInfo(false); setTimeout(() => fileInputRef.current?.click(), 300) }}
-            className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:opacity-80 transition-opacity"
+            className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:opacity-80 transition-opacity min-h-[44px] flex flex-col items-center justify-center"
             style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
           >
             <div className="text-3xl mb-2">📂</div>

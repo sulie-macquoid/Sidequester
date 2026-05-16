@@ -46,10 +46,11 @@ export function parseCSVText(text: string): CSVParseResult {
   }
 
   const rows: ParsedQuestRow[] = []
+  let skippedCount = 0
 
   for (const row of result.data as any[]) {
     const title = (row.title?.trim() ?? '')
-    if (!title) continue
+    if (!title) { skippedCount++; continue }
 
     const desc = (row.description?.trim() ?? row.desc?.trim() ?? '')
     const rawValue = parseInt(row.value ?? row.points ?? '50', 10)
@@ -69,7 +70,9 @@ export function parseCSVText(text: string): CSVParseResult {
     return { valid: false, rows: [], error: 'No quests found in file', rowCount: 0 }
   }
 
-  return { valid: true, rows, rowCount: rows.length }
+  const warning = skippedCount > 0 ? `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped (missing title)` : undefined
+
+  return { valid: true, rows, rowCount: rows.length, error: warning }
 }
 
 export function questsToCSV(quests: { title: string; description: string; value: number; emoji: string; color: string }[]): string {
@@ -87,7 +90,7 @@ export function downloadCSV(filename: string, csv: string) {
   a.href = url
   a.download = filename
   a.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
 export async function parseCSVFile(file: File): Promise<CSVParseResult> {
@@ -99,6 +102,9 @@ export async function parseCSVFile(file: File): Promise<CSVParseResult> {
     }
     reader.onerror = () => {
       resolve({ valid: false, rows: [], error: 'Failed to read file', rowCount: 0 })
+    }
+    reader.onabort = () => {
+      resolve({ valid: false, rows: [], error: 'File read aborted', rowCount: 0 })
     }
     reader.readAsText(file)
   })

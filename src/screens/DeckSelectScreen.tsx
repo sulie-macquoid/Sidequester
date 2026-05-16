@@ -39,8 +39,8 @@ export default function DeckSelectScreen({ decks, onStartGame, onBack }: Props) 
 
   return (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-      <div className="flex items-center px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
-        <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} style={{ color: 'var(--text-primary)' }}>
+      <div className="flex items-center px-4 py-3 min-h-[52px]" style={{ backgroundColor: 'var(--bezel)' }}>
+        <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-primary)' }}>
           <ArrowLeft size={20} />
         </motion.button>
         <span className="ml-2 font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Choose a Deck</span>
@@ -61,7 +61,7 @@ export default function DeckSelectScreen({ decks, onStartGame, onBack }: Props) 
             transition={{ delay: i * 0.08, type: 'spring', stiffness: 200 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => handleDeckClick(deck.id)}
-            className="w-full rounded-2xl flex flex-col items-center gap-2 p-6 shadow-xl text-center"
+            className="w-full rounded-2xl flex flex-col items-center gap-2 p-6 shadow-xl text-center min-h-[44px]"
             style={{ backgroundColor: 'var(--surface)' }}
           >
             <div className="text-7xl">{deckEmoji(deck.emoji)}</div>

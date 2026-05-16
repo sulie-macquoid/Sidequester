@@ -67,15 +67,15 @@ export default function EmojiPicker({ selected, onSelect }: Props) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Paste an emoji..."
-            className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
-            style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)' }}
+            className="flex-1 px-3 py-2 rounded-lg outline-none"
+            style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)', fontSize: '16px' }}
             autoFocus
             onKeyDown={(e) => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setAdding(false) }}
           />
           <button
             onClick={handleAdd}
             disabled={!input.trim()}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+            className="px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-50 min-h-[44px]"
             style={{ backgroundColor: '#54A0FF', color: 'white' }}
           >
             Add

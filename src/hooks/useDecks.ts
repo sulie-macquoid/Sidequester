@@ -9,10 +9,7 @@ import {
   deleteQuest,
 } from '../db/stores'
 import type { Deck, Quest } from '../types'
-
-function uid(): string {
-  return crypto.randomUUID()
-}
+import { uid } from '../utils/uid'
 
 export function useDecks() {
   const [decks, setDecks] = useState<Deck[]>([])

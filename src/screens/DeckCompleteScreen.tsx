@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { motion } from 'motion/react'
 import { RotateCcw, Home, Clock, Star, CheckCircle, Share2 } from 'lucide-react'
 import { formatTime } from '../utils/formatters'
@@ -15,12 +14,13 @@ interface Props {
 }
 
 export default function DeckCompleteScreen({ stats, onPlayAgain, onBackToMenu }: Props) {
-  const handleShare = useCallback(async () => {
-    const text = `🎉 Sully's Sidequests\n\nScore: ${stats.score}\nCompleted: ${stats.completedCount}/${stats.totalQuests}\nTime: ${formatTime(stats.elapsedSeconds)}\n\nPlay at: ${window.location.origin}/Sidequester/`
+  const handleShare = async () => {
+    const text = `Sully's Sidequests\n\nScore: ${stats.score}\nCompleted: ${stats.completedCount}/${stats.totalQuests}\nTime: ${formatTime(stats.elapsedSeconds)}\n\nPlay at: ${window.location.origin}/Sidequester/`
     if (navigator.share) {
-      await navigator.share({ title: "Sully's Sidequests", text }).catch(() => {})
+      try { await navigator.share({ title: "Sully's Sidequests", text }) } catch {}
     }
-  }, [stats])
+  }
+
   return (
     <div
       className="flex-1 flex flex-col items-center justify-center px-6"
@@ -84,7 +84,7 @@ export default function DeckCompleteScreen({ stats, onPlayAgain, onBackToMenu }:
           transition={{ delay: 0.4 }}
           whileTap={{ scale: 0.95 }}
           onClick={onPlayAgain}
-          className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 shadow-lg"
+          className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 shadow-lg min-h-[60px]"
           style={{ backgroundColor: '#54A0FF', color: 'white' }}
         >
           <RotateCcw size={18} />
@@ -97,7 +97,7 @@ export default function DeckCompleteScreen({ stats, onPlayAgain, onBackToMenu }:
           transition={{ delay: 0.5 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleShare}
-          className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 min-h-[60px]"
           style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
         >
           <Share2 size={18} />
@@ -110,7 +110,7 @@ export default function DeckCompleteScreen({ stats, onPlayAgain, onBackToMenu }:
           transition={{ delay: 0.6 }}
           whileTap={{ scale: 0.95 }}
           onClick={onBackToMenu}
-          className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2"
+          className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2 min-h-[60px]"
           style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
         >
           <Home size={18} />

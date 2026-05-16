@@ -102,11 +102,11 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl flex flex-col max-w-md mx-auto"
         style={{ backgroundColor: 'var(--surface)' }}
       >
-        <div className="flex items-center justify-between p-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between p-4 border-b shrink-0 min-h-[52px]" style={{ borderColor: 'var(--border)' }}>
           <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
             {step === 'session' ? 'Continue Game?' : 'Game Settings'}
           </h2>
-          <button onClick={onClose} style={{ color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
             <X size={20} />
           </button>
         </div>
@@ -120,7 +120,7 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
               <div className="flex gap-3">
                 <button
                   onClick={handleReset}
-                  className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
+                  className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 min-h-[44px]"
                   style={{ backgroundColor: 'var(--bg)', color: 'var(--text-secondary)' }}
                 >
                   <RotateCcw size={16} />
@@ -128,7 +128,7 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
                 </button>
                 <button
                   onClick={handleContinue}
-                  className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2"
+                  className="flex-1 py-3 rounded-xl text-sm font-medium flex items-center justify-center gap-2 min-h-[44px]"
                   style={{ backgroundColor: '#54A0FF', color: 'white' }}
                 >
                   <Play size={16} />
@@ -192,12 +192,14 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
                   <div className="flex items-center gap-2 mt-3 ml-[52px]">
                     <input
                       type="number"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       value={timeInput}
                       onChange={(e) => setTimeInput(e.target.value)}
                       min={1}
                       max={999}
                       className="w-20 px-3 py-2 rounded-lg text-lg font-semibold text-center outline-none"
-                      style={{ backgroundColor: 'var(--bg)', color: '#FECA57' }}
+                      style={{ backgroundColor: 'var(--bg)', color: '#FECA57', fontSize: '16px' }}
                     />
                     <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>minutes</span>
                   </div>
@@ -207,12 +209,12 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
           )}
         </div>
 
-        <div className="p-4 border-t shrink-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="p-4 border-t shrink-0 min-h-[52px]" style={{ borderColor: 'var(--border)' }}>
           {step === 'settings' && (
             <button
               onClick={handleStart}
               disabled={timeEnabled && !timeValid}
-              className="w-full py-3 rounded-xl text-sm font-medium disabled:opacity-50"
+              className="w-full py-3 rounded-xl text-sm font-medium disabled:opacity-50 min-h-[44px]"
               style={{ backgroundColor: '#54A0FF', color: 'white' }}
             >
               Start Game

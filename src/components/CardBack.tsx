@@ -17,12 +17,11 @@ export default function CardBack({ emoji, title, value, color, index, flipped, o
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
       onClick={flipped ? undefined : onFlip}
-      className="rounded-2xl flex flex-col items-center justify-center p-3 cursor-pointer relative overflow-hidden"
+      className="rounded-2xl flex flex-col items-center justify-center p-3 cursor-pointer relative overflow-hidden active:scale-[0.97] transition-transform"
       style={{
         backgroundColor: 'var(--surface)',
         aspectRatio: '3/4',
       }}
-      whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
     >
       <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: color }} />

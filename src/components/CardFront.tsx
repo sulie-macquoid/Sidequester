@@ -5,14 +5,18 @@ interface Props {
   value: number
   color: string
   onFlip: () => void
+  dragging?: boolean
 }
 
-export default function CardFront({ emoji, title, description, value, color, onFlip }: Props) {
+export default function CardFront({ emoji, title, description, value, color, onFlip, dragging }: Props) {
   return (
     <div
-      onClick={onFlip}
-      className="w-full h-full rounded-2xl flex flex-col cursor-grab active:cursor-grabbing relative overflow-hidden"
-      style={{ backgroundColor: 'var(--surface)' }}
+      onClick={dragging ? undefined : onFlip}
+      className="w-full h-full rounded-2xl flex flex-col relative overflow-hidden select-none"
+      style={{
+        backgroundColor: 'var(--surface)',
+        touchAction: 'none',
+      }}
     >
       <div
         className="absolute inset-0 rounded-2xl pointer-events-none"

@@ -2,10 +2,7 @@ import { useState, useCallback, useRef } from 'react'
 import type { Quest, Session, CompletedEntry, GameSettings } from '../types'
 import { saveSession, getActiveSession, getQuests } from '../db/stores'
 import { pickWeighted, updateWeightOnDiscard, resetWeightsIfCycleComplete } from '../utils/probability'
-
-function uid(): string {
-  return crypto.randomUUID()
-}
+import { uid } from '../utils/uid'
 
 const HAND_SIZE = 4
 
@@ -26,6 +23,10 @@ export function useGame() {
 
   const sessionRef = useRef(session)
   sessionRef.current = session
+  const scoreRef = useRef(score)
+  scoreRef.current = score
+  const completedRef = useRef(completedEntries)
+  completedRef.current = completedEntries
 
   const persistSession = useCallback(async (s: Session) => {
     await saveSession(s)
@@ -172,21 +173,11 @@ export function useGame() {
       completedAt: Date.now(),
     }
 
-    setCompletedEntries(prev => {
-      const next = [...prev, entry]
-      if (sessionRef.current) {
-        const updated = {
-          ...sessionRef.current,
-          completedQuests: next,
-          currentScore: score + card.value,
-          elapsedSeconds: Math.max(sessionRef.current.elapsedSeconds, 0),
-        }
-        persistSession(updated)
-      }
-      return next
-    })
+    const newScore = scoreRef.current + card.value
+    const newEntries = [...completedRef.current, entry]
 
-    setScore(s => s + card.value)
+    setScore(newScore)
+    setCompletedEntries(newEntries)
     setCompletedQuestIds(prev => {
       const next = new Set(prev)
       next.add(cardId)
@@ -194,15 +185,17 @@ export function useGame() {
     })
 
     if (sessionRef.current) {
-      sessionRef.current = {
+      const updated: Session = {
         ...sessionRef.current,
-        completedQuests: [...completedEntries, entry],
-        currentScore: score + card.value,
+        completedQuests: newEntries,
+        currentScore: newScore,
       }
+      sessionRef.current = updated
+      persistSession(updated)
     }
 
     replaceCard(cardId)
-  }, [hand, score, completedEntries, replaceCard, persistSession])
+  }, [hand, replaceCard, persistSession])
 
   const discardQuest = useCallback((cardId: string) => {
     setWeights(prev => {
@@ -216,10 +209,9 @@ export function useGame() {
     })
 
     if (sessionRef.current) {
-      const updated = {
+      const updated: Session = {
         ...sessionRef.current,
         discardedQuestIds: [...(sessionRef.current.discardedQuestIds ?? []), cardId],
-        elapsedSeconds: Math.max(sessionRef.current.elapsedSeconds, 0),
       }
       sessionRef.current = updated
       persistSession(updated)
@@ -228,10 +220,10 @@ export function useGame() {
     replaceCard(cardId)
   }, [replaceCard, persistSession, gameSettings])
 
-  const saveTimer = useCallback((elapsedSeconds: number) => {
+  const saveTimer = useCallback(async (elapsedSeconds: number) => {
     if (sessionRef.current) {
       sessionRef.current = { ...sessionRef.current, elapsedSeconds }
-      persistSession(sessionRef.current)
+      await persistSession(sessionRef.current)
     }
   }, [persistSession])
 

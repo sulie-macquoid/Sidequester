@@ -1,4 +1,12 @@
+function isValidHex(hex: string): boolean {
+  return /^#[0-9A-Fa-f]{6}$/i.test(hex)
+}
+
 export function calculateLuminance(hex: string): number {
+  if (!isValidHex(hex)) {
+    console.warn(`Invalid hex color: "${hex}", defaulting to black`)
+    return 0
+  }
   const c = hex.replace('#', '')
   const r = parseInt(c.substring(0, 2), 16) / 255
   const g = parseInt(c.substring(2, 4), 16) / 255
@@ -14,15 +22,20 @@ export function getContrastColor(hex: string): '#F0F0F5' | '#1A1A1A' {
   return calculateLuminance(hex) > 0.5 ? '#1A1A1A' : '#F0F0F5'
 }
 
+function clampChannel(v: number): number {
+  return Math.max(0, Math.min(255, Math.round(v)))
+}
+
 export function shiftLightness(hex: string, amount: number): string {
+  if (!isValidHex(hex)) return hex
   const c = hex.replace('#', '')
   let r = parseInt(c.substring(0, 2), 16)
   let g = parseInt(c.substring(2, 4), 16)
   let b = parseInt(c.substring(4, 6), 16)
 
-  r = Math.max(0, Math.min(255, r + amount))
-  g = Math.max(0, Math.min(255, g + amount))
-  b = Math.max(0, Math.min(255, b + amount))
+  r = clampChannel(r + amount)
+  g = clampChannel(g + amount)
+  b = clampChannel(b + amount)
 
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
@@ -38,15 +51,16 @@ export function deriveBezelColor(bg: string): string {
 }
 
 export function desaturate(hex: string, amount: number): string {
+  if (!isValidHex(hex)) return hex
   const c = hex.replace('#', '')
   let r = parseInt(c.substring(0, 2), 16)
   let g = parseInt(c.substring(2, 4), 16)
   let b = parseInt(c.substring(4, 6), 16)
   const gray = 0.299 * r + 0.587 * g + 0.114 * b
 
-  r = Math.round(r + (gray - r) * amount)
-  g = Math.round(g + (gray - g) * amount)
-  b = Math.round(b + (gray - b) * amount)
+  r = clampChannel(r + (gray - r) * amount)
+  g = clampChannel(g + (gray - g) * amount)
+  b = clampChannel(b + (gray - b) * amount)
 
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }

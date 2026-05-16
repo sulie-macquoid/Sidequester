@@ -24,7 +24,8 @@ export default defineConfig({
         start_url: '/Sidequester/',
         icons: [
           { src: '/Sidequester/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/Sidequester/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/Sidequester/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+          { src: '/Sidequester/icons/icon-180.png', sizes: '180x180', type: 'image/png' },
         ],
       },
       workbox: {

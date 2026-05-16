@@ -1,9 +1,6 @@
 import { getDecks, saveDeck, saveQuest } from './stores'
 import type { Deck, Quest } from '../types'
-
-function uid(): string {
-  return crypto.randomUUID()
-}
+import { uid } from '../utils/uid'
 
 const TOKYO_DECK: Deck = {
   id: uid(),

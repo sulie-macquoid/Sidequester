@@ -78,9 +78,9 @@ export default function SettingsSheet({ open, onClose }: Props) {
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[85vh] flex flex-col max-w-md mx-auto"
         style={{ backgroundColor: 'var(--surface)' }}
       >
-        <div className="flex items-center justify-between p-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between p-4 border-b shrink-0 min-h-[52px]" style={{ borderColor: 'var(--border)' }}>
           <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Settings</h2>
-          <button onClick={onClose} style={{ color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
             <X size={20} />
           </button>
         </div>
@@ -89,11 +89,11 @@ export default function SettingsSheet({ open, onClose }: Props) {
             <div className="text-xs italic" style={{ color: 'var(--text-secondary)' }}>
               vibecoded by Sulaiman &quot;Bossman&quot; Al Harthy
             </div>
-            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.5.3</div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.5.4</div>
             <div className="relative inline-block">
               <button
                 onClick={handleShareLink}
-                className="flex items-center gap-1 text-xs mt-1"
+                className="flex items-center gap-1 text-xs mt-1 min-h-[44px]"
                 style={{ color: '#54A0FF' }}
               >
                 <Share2 size={12} />
@@ -139,7 +139,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
                     const bgForTheme = t === 'light' ? '#F5F3F0' : '#0F0F1A'
                     updateSettings({ theme: t, backgroundColor: bgForTheme })
                   }}
-                  className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex-1 py-3 rounded-lg text-sm font-medium transition-all min-h-[44px] ${
                     settings.theme === t ? 'outline-2 outline-[#54A0FF] outline' : ''
                   }`}
                   style={{
@@ -163,14 +163,14 @@ export default function SettingsSheet({ open, onClose }: Props) {
                 value={emojiInput}
                 onChange={(e) => setEmojiInput(e.target.value)}
                 placeholder="Add an emoji..."
-                className="flex-1 px-3 py-1.5 rounded-lg text-sm outline-none"
-                style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)' }}
+                className="flex-1 px-3 py-2 rounded-lg outline-none"
+                style={{ backgroundColor: 'var(--bg)', color: 'var(--text-primary)', fontSize: '16px' }}
                 onKeyDown={(e) => { if (e.key === 'Enter') addEmoji() }}
               />
               <button
                 onClick={addEmoji}
                 disabled={!emojiInput.trim()}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium disabled:opacity-50"
+                className="px-4 py-2 rounded-lg text-xs font-medium disabled:opacity-50 min-h-[44px]"
                 style={{ backgroundColor: '#54A0FF', color: 'white' }}
               >
                 <Plus size={16} />
@@ -183,7 +183,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
                   <button
                     key={emoji}
                     onClick={() => handleEmojiClick(emoji)}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-base transition-all focus:outline-none"
+                    className="w-9 h-9 flex items-center justify-center rounded-lg text-base transition-all focus:outline-none min-w-[36px] min-h-[36px]"
                     style={{
                       backgroundColor: isSelected ? 'rgba(220,20,60,0.25)' : 'var(--surface)',
                     }}
@@ -197,7 +197,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
 
           <button
             onClick={() => setDebugOpen(true)}
-            className="text-xs font-mono w-full text-center py-2"
+            className="text-xs font-mono w-full text-center py-3 min-h-[44px]"
             style={{ color: 'var(--text-secondary)' }}
           >
             Debug

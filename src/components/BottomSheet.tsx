@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { X } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 interface Props {
   open: boolean
@@ -11,6 +11,17 @@ interface Props {
 }
 
 export default function BottomSheet({ open, onClose, title, children, footer }: Props) {
+  const [viewportHeight, setViewportHeight] = useState<number>(window.visualViewport?.height ?? window.innerHeight)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = () => {
+      setViewportHeight(window.visualViewport?.height ?? window.innerHeight)
+    }
+    window.visualViewport?.addEventListener('resize', handler)
+    return () => window.visualViewport?.removeEventListener('resize', handler)
+  }, [open])
+
   if (!open) return null
 
   return (
@@ -31,11 +42,11 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[85vh] flex flex-col max-w-md mx-auto"
-        style={{ backgroundColor: 'var(--surface)' }}
+        style={{ backgroundColor: 'var(--surface)', maxHeight: `${Math.min(viewportHeight * 0.85, 85)}vh` }}
       >
-        <div className="flex items-center justify-between p-4 border-b shrink-0" style={{ borderColor: 'var(--border)' }}>
+        <div className="flex items-center justify-between p-4 border-b shrink-0 min-h-[52px]" style={{ borderColor: 'var(--border)' }}>
           <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>{title}</h2>
-          <button onClick={onClose} style={{ color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-secondary)' }}>
             <X size={20} />
           </button>
         </div>

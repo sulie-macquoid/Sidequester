@@ -13,7 +13,26 @@ A personal quest-generator PWA — swipe through a hand of cards, complete sideq
 - **Session persistence** — Unfinished games resume across tab closes
 - **PWA** — Install on home screen, works offline, portrait standalone mode
 
-## 📦 Latest Release — v1.5.3
+## 📦 Latest Release — v1.5.4
+
+- **Critical bug fixes**: IndexedDB error handling (try/catch on all operations), iOS private browsing fallback, stale closures in game state (score no longer lags), `crypto.randomUUID()` fallback for insecure contexts, `persistSession` now properly awaited
+- **iOS keyboard fix**: `visualViewport` listener on all bottom sheets — inputs no longer hidden by keyboard
+- **iOS swipe back**: Added `preventDefault()` to prevent system back gesture conflict, `touchAction: 'pan-y'` on root div, fixed `dy > dx` killing one-handed thumb swipes
+- **Timer**: Now Date-based instead of `setInterval` increment — accurate even when iOS Safari backgrounds the tab
+- **iOS auto-zoom**: All inputs increased to `font-size: 16px` to prevent iOS zoom on focus
+- **Tap targets**: 44pt minimum on all buttons (Apple HIG compliance)
+- **Swipe click**: Fixed synthesized click firing 300ms after swipe causing false collapse
+- **Card drag**: Added `select-none`, `touchAction: 'none'`, `active:scale-[0.97]` for mobile feedback
+- **CSV download**: Fixed `revokeObjectURL` timing for iOS Safari
+- **System theme**: Added `matchMedia` listener — system dark/light toggles now reactive while app is open
+- **PWA**: Added `purpose: "any maskable"` for Android adaptive icons
+- **Accessibility**: Removed `user-scalable=no` from viewport meta, added `inputMode="numeric"` and `pattern="[0-9]*"` on number inputs
+- **Input validation**: `calculateLuminance` now validates hex strings (prevents NaN cascade), `pickWeighted` logs warning on all-zero weights
+- **`logError` eviction**: Now removes up to 50 entries when limit reached (unbounded growth fix)
+- **`deleteDeck` race condition**: Reads quests/sessions inside the transaction (no orphaned records)
+- **CardBack**: Added `active:scale-[0.97]` for mobile touch feedback (replaces desktop-only `whileHover`)
+
+## 📦 Previous Release — v1.5.3
 
 - Share link in settings — copies the game URL to clipboard with "Copied!" toast
 - Fixed reset from continue game popup now properly deactivates the session

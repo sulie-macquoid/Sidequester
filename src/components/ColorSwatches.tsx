@@ -19,7 +19,7 @@ export default function ColorSwatches({ selected, onSelect }: Props) {
         <button
           key={color}
           onClick={() => onSelect(color)}
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-transform active:scale-90"
+          className="w-9 h-9 rounded-full flex items-center justify-center transition-transform active:scale-90 min-w-[36px] min-h-[36px]"
           style={{ backgroundColor: color }}
         >
           {selected === color && <Check size={16} color={color === '#FECA57' || color === '#A29BFE' || color === '#F5F3F0' ? '#1A1A1A' : 'white'} />}
