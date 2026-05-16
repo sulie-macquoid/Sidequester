@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { motion } from 'motion/react'
-import { Settings } from 'lucide-react'
+import { Settings, Info } from 'lucide-react'
 import SettingsSheet from '../components/SettingsSheet'
+import ChangelogSheet from '../components/ChangelogSheet'
 
 interface Props {
   onPlay: () => void
@@ -10,6 +11,7 @@ interface Props {
 
 export default function MenuScreen({ onPlay, onEdit }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [changelogOpen, setChangelogOpen] = useState(false)
 
   return (
     <>
@@ -47,6 +49,14 @@ export default function MenuScreen({ onPlay, onEdit }: Props) {
         </div>
 
         <button
+          onClick={() => setChangelogOpen(true)}
+          className="absolute bottom-8 left-6 p-3 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          <Info size={22} />
+        </button>
+
+        <button
           onClick={() => setSettingsOpen(true)}
           className="absolute bottom-8 right-6 p-3 rounded-full min-w-[44px] min-h-[44px] flex items-center justify-center"
           style={{ color: 'var(--text-secondary)' }}
@@ -56,6 +66,7 @@ export default function MenuScreen({ onPlay, onEdit }: Props) {
       </div>
 
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ChangelogSheet open={changelogOpen} onClose={() => setChangelogOpen(false)} />
     </>
   )
 }

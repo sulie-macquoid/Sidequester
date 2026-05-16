@@ -7,6 +7,7 @@ const SETTINGS_DEFAULTS: Settings = {
   customEmojis: [],
   disabledEmojis: [],
   deckOrder: [],
+  seenUpdates: [],
 }
 
 async function safeDB<T>(fn: () => Promise<T>, fallback: T): Promise<T> {

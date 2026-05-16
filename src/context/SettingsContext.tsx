@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: Settings = {
   customEmojis: [],
   disabledEmojis: [],
   deckOrder: [],
+  seenUpdates: [],
 }
 
 interface SettingsContextValue {

@@ -14,6 +14,7 @@ import GameScreen from './screens/GameScreen'
 import DeckListScreen from './screens/DeckListScreen'
 import DeckDetailScreen from './screens/DeckDetailScreen'
 import DeckCompleteScreen from './screens/DeckCompleteScreen'
+import UpdateChecker from './components/UpdateChecker'
 
 const pageVariants = {
   forward: {
@@ -106,6 +107,7 @@ export default function App() {
     <ErrorBoundary currentView={view}>
       <SettingsProvider>
       <ThemeProvider>
+        <UpdateChecker />
         <div
           className="flex-1 flex flex-col min-h-dvh"
           style={{ backgroundColor: 'var(--bg)', touchAction: isGame ? 'auto' : 'pan-y' }}

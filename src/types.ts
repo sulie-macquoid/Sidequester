@@ -58,6 +58,7 @@ export interface Settings {
   disabledEmojis: string[]
   deckOrder: string[]
   gameSettings?: Record<string, GameSettings>
+  seenUpdates?: string[]
 }
 
 export interface ErrorLogEntry {
