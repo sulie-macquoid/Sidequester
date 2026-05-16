@@ -1,73 +1,72 @@
-# React + TypeScript + Vite
+# 🎮 Sully's Sidequests
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A personal quest-generator PWA — swipe through a hand of cards, complete sidequests in real life, and track your score. No backend, no accounts, all data stored locally on your device.
 
-Currently, two official plugins are available:
+[![Deploy to Pages](https://github.com/sulie-macquoid/Sidequester/actions/workflows/deploy.yml/badge.svg)](https://github.com/sulie-macquoid/Sidequester/actions/workflows/deploy.yml)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ Features
 
-## React Compiler
+- **Card-based gameplay** — 4-card hand, Tinder-style swipe (right = complete, left = discard)
+- **Smart probability** — Discarded cards re-enter with halved weight; cycle resets prevent starvation
+- **Game settings** — Time constraint mode with absolute countdown, permanent discard toggle
+- **Deck management** — Create, edit, reorder decks; edit quest titles, descriptions, emojis, point values
+- **CSV export/import** — Download decks as CSV, import with format guide + file drop zone
+- **Custom emoji** — Add/remove emojis from the grid; deleted emojis fall back to 🇴🇲
+- **Dark / light / system theme** — Custom background colors, linked theme toggles
+- **PWA** — Install on iOS/Android home screen, works offline, portrait standalone mode
+- **Session persistence** — Unfinished games resume across tab closes
+- **Share score** — Native share sheet on deck complete
+- **Swipe back gesture** — iOS-style left-edge drag on non-game screens
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🚀 Quick Start
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Opens at `http://localhost:5173/Sidequester/`.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🏗️ Build
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
 ```
+
+Outputs to `dist/`. PWA service worker is generated automatically.
+
+## 🌐 Deployment
+
+Pushes to `main` auto-deploy to GitHub Pages via GitHub Actions.  
+Live at: https://sulie-macquoid.github.io/Sidequester/
+
+## 📁 Project Structure
+
+```
+src/
+├── components/    # Reusable UI (CardFront, CardBack, BottomSheet, EmojiPicker, etc.)
+├── context/       # SettingsContext (shared reactive state)
+├── db/            # IndexedDB stores + seed data
+├── hooks/         # useGame, useDecks, useView, useTimer
+├── screens/       # MenuScreen, DeckSelectScreen, GameScreen, etc.
+├── utils/         # Colors, CSV parsing, probability, formatters
+├── App.tsx         # Screen routing + swipe back gesture
+└── types.ts        # Shared TypeScript types
+```
+
+## 🧱 Tech Stack
+
+- React 19 + TypeScript
+- Tailwind CSS v4
+- Framer Motion (animations + drag/swipe)
+- Vite + vite-plugin-pwa
+- idb (IndexedDB wrapper)
+- lucide-react (icons)
+
+## 📝 Keeping README Updated
+
+When adding new features, update the **Features** section above so this README always reflects the current state of the app.
+
+---
+
+*vibecoded by Sulaiman "Bossman" al harthy*
