@@ -7,16 +7,22 @@ A personal quest-generator PWA — swipe through a hand of cards, complete sideq
 ## ✨ Features
 
 - **Card-based gameplay** — 4-card hand, Tinder-style swipe (right = complete, left = discard)
-- **Smart probability** — Discarded cards re-enter with halved weight; cycle resets prevent starvation
-- **Game settings** — Time constraint mode with absolute countdown, permanent discard toggle
-- **Deck management** — Create, edit, reorder decks; edit quest titles, descriptions, emojis, point values
-- **CSV export/import** — Download decks as CSV, import with format guide + file drop zone
-- **Custom emoji** — Add/remove emojis from the grid; deleted emojis fall back to 🇴🇲
-- **Dark / light / system theme** — Custom background colors, linked theme toggles
-- **PWA** — Install on iOS/Android home screen, works offline, portrait standalone mode
+- **Smart probability** — Discarded cards re-enter with halved weight, cycle resets prevent starvation
+- **Pre-game settings** — Time constraint mode with absolute countdown, permanent discard toggle
+- **Deck management** — Create, edit, reorder decks; CSV export/import with format guide
 - **Session persistence** — Unfinished games resume across tab closes
-- **Share score** — Native share sheet on deck complete
-- **Swipe back gesture** — iOS-style left-edge drag on non-game screens
+- **PWA** — Install on home screen, works offline, portrait standalone mode
+
+## 📦 Latest Release — v1.5.0
+
+- Pre-game settings with time constraint and permanent discard toggles
+- Unfinished games prompt to continue or reset
+- Absolute countdown timer persists across tab closes
+- Export decks as CSV, import with format guide and file drop zone
+- iOS-style swipe back gesture on non-game screens
+- Beautified card backs with improved layout and typography
+- Native share sheet on deck complete screen
+- Bug fixes and polish
 
 ## 🚀 Quick Start
 
