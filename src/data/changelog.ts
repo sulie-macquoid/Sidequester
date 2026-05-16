@@ -86,6 +86,47 @@ export const CHANGELOG: ReleaseEntry[] = [
     ],
   },
   {
+    version: '1.3.0',
+    label: 'Robustness & Settings Polish',
+    items: [
+      'Error Boundary component to catch render crashes gracefully',
+      'Error logging to IndexedDB (last 200 entries stored automatically)',
+      'Debug Sheet to view, clear, and copy error logs',
+      'Emoji grid improvements — add custom emojis, tap to remove from grid',
+      'Background color picker in settings with live preview',
+      'Version number display in settings',
+    ],
+  },
+  {
+    version: '1.2.0',
+    label: 'Card Flip & Game Flow',
+    items: [
+      'Card Front face with description text and swipe direction hints',
+      '3D card flip animation on tap (rotateY)',
+      'Staggered card deal spring animation (80ms delay between cards)',
+      'Score bounce animation on quest complete',
+      '"Show Completed" popup with animated entries and timestamps',
+      'Deck Complete screen with final score, elapsed time, and play again',
+      'Haptic feedback on card swipe and quest actions',
+      'Card front color bar matching quest color',
+    ],
+  },
+  {
+    version: '1.1.0',
+    label: 'Deck Manager',
+    items: [
+      'Deck List screen with add, edit, delete, and drag-to-reorder',
+      'Deck Detail screen for managing quests in a deck',
+      'Edit Deck bottom sheet (name, subtext, emoji, color)',
+      'Edit Quest bottom sheet (emoji, title, description, value, color)',
+      'Point value stepper buttons (+/- 10, range 10–500)',
+      'Color strips on quest rows for visual identification',
+      'Empty deck state with helpful message',
+      'Delete confirmation before removing quests',
+      'Back navigation button on all edit screens',
+    ],
+  },
+  {
     version: '1.0.0',
     label: 'Initial Release',
     items: [
