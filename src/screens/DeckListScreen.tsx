@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, Reorder } from 'motion/react'
-import { Plus, ArrowLeft, Upload, Trash2, Pen, GripVertical } from 'lucide-react'
+import { Plus, ArrowLeft, Upload, Download, Trash2, Pen, GripVertical } from 'lucide-react'
 import type { Deck, ParsedQuestRow } from '../types'
-import { parseCSVFile } from '../utils/csv'
+import { parseCSVFile, questsToCSV, downloadCSV } from '../utils/csv'
+import { getQuests } from '../db/stores'
 import { resolveEmoji } from '../utils/formatters'
 import { useSettings } from '../context/SettingsContext'
 import BottomSheet from '../components/BottomSheet'
@@ -30,6 +31,7 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
   const [newDesc, setNewDesc] = useState('Ready to play')
   const [newEmoji, setNewEmoji] = useState('🎯')
   const [newColor, setNewColor] = useState('#54A0FF')
+  const [showImportInfo, setShowImportInfo] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<ParsedQuestRow[]>([])
   const [importError, setImportError] = useState<string | null>(null)
@@ -94,6 +96,12 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
     setEditDeck(null)
   }
 
+  const handleExport = async (deck: Deck) => {
+    const quests = await getQuests(deck.id)
+    const csv = questsToCSV(quests)
+    downloadCSV(`${deck.name.replace(/[^a-zA-Z0-9]/g, '_')}_quests.csv`, csv)
+  }
+
   const handleFilePick = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -104,6 +112,7 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
     }
     setImportRows(result.rows)
     setImportOpen(true)
+    setShowImportInfo(false)
     setImportError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
@@ -121,7 +130,7 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
           <div className="flex items-center gap-2">
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => fileInputRef.current?.click()}
+              onClick={() => setShowImportInfo(true)}
               className="p-2 rounded-lg"
               style={{ color: 'var(--text-primary)' }}
             >
@@ -185,6 +194,13 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
                     <div className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>{deck.name}</div>
                     <div className="text-xs truncate" style={{ color: 'var(--text-secondary)' }}>{deck.description || 'Ready to play'}</div>
                   </div>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleExport(deck) }}
+                    className="p-1.5 rounded-lg"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    <Download size={16} />
+                  </button>
                   <button
                     onClick={(e) => { e.stopPropagation(); openEdit(deck) }}
                     className="p-1.5 rounded-lg"
@@ -325,6 +341,43 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
         onClose={() => { setImportOpen(false); setImportRows([]) }}
         onImported={() => setImportOpen(false)}
       />
+
+      <BottomSheet
+        open={showImportInfo}
+        onClose={() => setShowImportInfo(false)}
+        title="Import Quests"
+      >
+        <div className="space-y-4">
+          <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            Import quests from a <strong style={{ color: 'var(--text-primary)' }}>.csv</strong> file.
+            The CSV must have at least a <code style={{ color: '#FECA57' }}>title</code> column.
+          </p>
+
+          <div className="p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--bg)' }}>
+            <div className="font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>Required columns:</div>
+            <code className="block text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+              title,description,value,emoji,color
+            </code>
+            <div className="mt-2 space-y-1">
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>title</span> <span style={{ color: 'var(--text-secondary)' }}>— Quest name (required)</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>description</span> <span style={{ color: 'var(--text-secondary)' }}>— What to do</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>value</span> <span style={{ color: 'var(--text-secondary)' }}>— Point value (default 50)</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>emoji</span> <span style={{ color: 'var(--text-secondary)' }}>— Icon emoji</span></div>
+              <div><span className="font-medium" style={{ color: 'var(--text-primary)' }}>color</span> <span style={{ color: 'var(--text-secondary)' }}>— Hex color</span></div>
+            </div>
+          </div>
+
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ borderColor: 'var(--border)', backgroundColor: 'var(--bg)' }}
+          >
+            <div className="text-3xl mb-2">📂</div>
+            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Choose a CSV file</p>
+            <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Tap to browse</p>
+          </div>
+        </div>
+      </BottomSheet>
     </>
   )
 }

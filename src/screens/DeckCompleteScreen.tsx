@@ -1,5 +1,6 @@
+import { useCallback } from 'react'
 import { motion } from 'motion/react'
-import { RotateCcw, Home, Clock, Star, CheckCircle } from 'lucide-react'
+import { RotateCcw, Home, Clock, Star, CheckCircle, Share2 } from 'lucide-react'
 import { formatTime } from '../utils/formatters'
 
 interface Props {
@@ -14,6 +15,12 @@ interface Props {
 }
 
 export default function DeckCompleteScreen({ stats, onPlayAgain, onBackToMenu }: Props) {
+  const handleShare = useCallback(async () => {
+    const text = `🎉 Sully's Sidequests\n\nScore: ${stats.score}\nCompleted: ${stats.completedCount}/${stats.totalQuests}\nTime: ${formatTime(stats.elapsedSeconds)}\n\nPlay at: ${window.location.origin}/Sidequester/`
+    if (navigator.share) {
+      await navigator.share({ title: "Sully's Sidequests", text }).catch(() => {})
+    }
+  }, [stats])
   return (
     <div
       className="flex-1 flex flex-col items-center justify-center px-6"
@@ -88,6 +95,19 @@ export default function DeckCompleteScreen({ stats, onPlayAgain, onBackToMenu }:
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleShare}
+          className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2"
+          style={{ backgroundColor: 'var(--surface)', color: 'var(--text-primary)' }}
+        >
+          <Share2 size={18} />
+          Share Score
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
           whileTap={{ scale: 0.95 }}
           onClick={onBackToMenu}
           className="w-full py-4 rounded-2xl font-semibold text-base flex items-center justify-center gap-2"

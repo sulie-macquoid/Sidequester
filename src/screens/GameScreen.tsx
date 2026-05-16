@@ -4,6 +4,7 @@ import { ArrowLeft, RotateCcw } from 'lucide-react'
 import { useGame } from '../hooks/useGame'
 import { useTimer } from '../hooks/useTimer'
 import { formatTime } from '../utils/formatters'
+import type { GameSettings } from '../types'
 import CardBack from '../components/CardBack'
 import CardFront from '../components/CardFront'
 import CompletedPopup from '../components/CompletedPopup'
@@ -14,10 +15,12 @@ interface GameStats {
   completedCount: number
   elapsedSeconds: number
   totalQuests: number
+  timeLimitSeconds?: number
 }
 
 interface Props {
   deckId: string
+  gameSettings: GameSettings | null
   onComplete: (stats: GameStats) => void
   onBack: () => void
 }
@@ -34,23 +37,20 @@ function SwipeableCard({
   const dragRotate = useTransform(dragX, [-300, 0, 300], [-15, 0, 15])
 
   return (
-    <div className="w-full h-full">
-      <motion.div
-        drag="x"
-        dragElastic={0.7}
-        dragSnapToOrigin
-        style={{ x: dragX, rotate: dragRotate } as any}
-        onDrag={(_, info) => onDragUpdate(info.offset.x)}
-        onDragEnd={(_, info) => onDragEnd(info, cardId)}
-        className="w-full h-full"
-      >
-        {children}
-      </motion.div>
-    </div>
+    <motion.div
+      drag="x"
+      dragElastic={0.4}
+      dragSnapToOrigin
+      style={{ x: dragX, rotate: dragRotate, width: '100%', height: '100%' } as any}
+      onDrag={(_, info) => onDragUpdate(info.offset.x)}
+      onDragEnd={(_, info) => onDragEnd(info, cardId)}
+    >
+      {children}
+    </motion.div>
   )
 }
 
-export default function GameScreen({ deckId, onComplete, onBack }: Props) {
+export default function GameScreen({ deckId, gameSettings, onComplete, onBack }: Props) {
   const game = useGame()
   const timer = useTimer()
   const [showCompleted, setShowCompleted] = useState(false)
@@ -63,14 +63,21 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
   timerRef.current = timer
 
   useEffect(() => {
-    game.startGame(deckId)
+    game.startGame(deckId, gameSettings ?? undefined)
     timer.reset()
   }, [deckId])
 
   useEffect(() => {
     if (game.session && !started) {
       setStarted(true)
-      timer.setElapsed(game.session.elapsedSeconds)
+      if (game.gameSettings?.timeConstraintEnabled && game.session.startedAt) {
+        const endTime = game.session.startedAt + game.gameSettings.timeLimitSeconds * 1000
+        const remaining = Math.max(0, Math.floor((endTime - Date.now()) / 1000))
+        const elapsed = game.gameSettings.timeLimitSeconds - remaining
+        timer.setElapsed(Math.max(elapsed, 0))
+      } else {
+        timer.setElapsed(game.session.elapsedSeconds)
+      }
       timer.start()
     }
   }, [game.session])
@@ -83,6 +90,7 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
         completedCount: game.completedEntries.length,
         elapsedSeconds: timer.elapsed,
         totalQuests: game.totalQuests,
+        timeLimitSeconds: game.gameSettings?.timeConstraintEnabled ? game.gameSettings.timeLimitSeconds : undefined,
       }), 600)
     }
   }, [game.gameOver])
@@ -93,6 +101,22 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
     }, 5000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (!game.gameSettings?.timeConstraintEnabled || !game.session?.startedAt || !started) return
+    const timeLimit = game.gameSettings.timeLimitSeconds
+    const endTime = game.session.startedAt + timeLimit * 1000
+    const check = setInterval(() => {
+      const remaining = Math.floor((endTime - Date.now()) / 1000)
+      if (remaining <= 0) {
+        if (!game.gameOver) {
+          timer.pause()
+          game.resetGame()
+        }
+      }
+    }, 1000)
+    return () => clearInterval(check)
+  }, [game.gameSettings?.timeConstraintEnabled, game.session?.startedAt, started, game.gameOver])
 
   const triggerScoreAnim = () => {
     setScoreAnim(true)
@@ -135,7 +159,7 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
     setShowResetConfirm(false)
     setStarted(false)
     setExpandedCardId(null)
-    game.startGame(deckId)
+    game.startGame(deckId, gameSettings ?? undefined)
     setTimeout(() => {
       setStarted(true)
       timer.start()
@@ -145,6 +169,13 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
   const completedCount = game.completedEntries.length
   const expandedCard = expandedCardId ? game.hand.find(c => c.id === expandedCardId) : null
 
+  const isTimeConstraint = game.gameSettings?.timeConstraintEnabled && game.session?.startedAt
+  const endTimeMs = isTimeConstraint
+    ? game.session!.startedAt + game.gameSettings!.timeLimitSeconds * 1000
+    : 0
+  const remainingSeconds = isTimeConstraint
+    ? Math.max(0, Math.floor((endTimeMs - Date.now()) / 1000))
+    : 0
   return (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--bezel)' }}>
@@ -168,8 +199,11 @@ export default function GameScreen({ deckId, onComplete, onBack }: Props) {
             {completedCount}/{game.totalQuests}
           </span>
           <span style={{ color: 'var(--text-secondary)' }}>•</span>
-          <span className="font-mono" style={{ color: 'var(--text-primary)' }}>
-            {formatTime(timer.elapsed)}
+          <span
+            className="font-mono"
+            style={{ color: isTimeConstraint && remainingSeconds <= 60 ? '#DC143C' : 'var(--text-primary)' }}
+          >
+            {isTimeConstraint ? formatTime(remainingSeconds) : formatTime(timer.elapsed)}
           </span>
         </div>
       </div>

@@ -72,6 +72,24 @@ export function parseCSVText(text: string): CSVParseResult {
   return { valid: true, rows, rowCount: rows.length }
 }
 
+export function questsToCSV(quests: { title: string; description: string; value: number; emoji: string; color: string }[]): string {
+  const header = 'title,description,value,emoji,color'
+  const rows = quests.map(q =>
+    `"${q.title.replace(/"/g, '""')}","${q.description.replace(/"/g, '""')}",${q.value},${q.emoji},${q.color}`
+  )
+  return [header, ...rows].join('\n')
+}
+
+export function downloadCSV(filename: string, csv: string) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export async function parseCSVFile(file: File): Promise<CSVParseResult> {
   return new Promise((resolve) => {
     const reader = new FileReader()

@@ -26,6 +26,18 @@ export interface CompletedEntry {
   completedAt: number
 }
 
+export interface GameSettings {
+  timeConstraintEnabled: boolean
+  timeLimitSeconds: number
+  permanentDiscard: boolean
+}
+
+export const DEFAULT_GAME_SETTINGS: GameSettings = {
+  timeConstraintEnabled: false,
+  timeLimitSeconds: 1800,
+  permanentDiscard: false,
+}
+
 export interface Session {
   id: string
   deckId: string
@@ -36,6 +48,7 @@ export interface Session {
   currentScore: number
   elapsedSeconds: number
   isActive: boolean
+  gameSettings?: GameSettings
 }
 
 export interface Settings {
@@ -44,6 +57,7 @@ export interface Settings {
   customEmojis: string[]
   disabledEmojis: string[]
   deckOrder: string[]
+  gameSettings?: Record<string, GameSettings>
 }
 
 export interface ErrorLogEntry {

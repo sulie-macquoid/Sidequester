@@ -4,9 +4,10 @@ import { SettingsProvider } from './context/SettingsContext'
 import { ThemeProvider } from './components/ThemeProvider'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { seedIfEmpty } from './db/seed'
-import { getActiveSession } from './db/stores'
+
 import { useView } from './hooks/useView'
 import { useDecks } from './hooks/useDecks'
+import type { GameSettings } from './types'
 import MenuScreen from './screens/MenuScreen'
 import DeckSelectScreen from './screens/DeckSelectScreen'
 import GameScreen from './screens/GameScreen'
@@ -32,6 +33,7 @@ interface GameStats {
   completedCount: number
   elapsedSeconds: number
   totalQuests: number
+  timeLimitSeconds?: number
 }
 
 export default function App() {
@@ -40,13 +42,14 @@ export default function App() {
   const [gameDeckId, setGameDeckId] = useState<string | null>(null)
   const [gameKey, setGameKey] = useState(0)
   const [finalStats, setFinalStats] = useState<GameStats | null>(null)
+  const [gameSettings, setGameSettings] = useState<GameSettings | null>(null)
 
   useEffect(() => {
     seedIfEmpty()
   }, [])
 
-  const handlePlayDeck = useCallback(async (deckId: string) => {
-    await getActiveSession(deckId)
+  const handleStartGame = useCallback(async (deckId: string, settings: GameSettings) => {
+    setGameSettings(settings)
     setGameDeckId(deckId)
     setGameKey(prev => prev + 1)
     setView('game', 'forward')
@@ -65,12 +68,25 @@ export default function App() {
   }, [gameDeckId, setView])
 
   const variants = pageVariants[viewTransition]
+  const isGame = view === 'game'
 
   return (
     <ErrorBoundary currentView={view}>
       <SettingsProvider>
       <ThemeProvider>
         <div className="flex-1 flex flex-col min-h-dvh" style={{ backgroundColor: 'var(--bg)' }}>
+          {!isGame && (
+            <motion.div
+              drag="x"
+              dragConstraints={{ left: 0, right: 60 }}
+              dragElastic={0.3}
+              onDragEnd={(_, info) => {
+                if (info.offset.x > 40) goBack()
+              }}
+              className="fixed left-0 top-0 bottom-0 w-8 z-30"
+              style={{ touchAction: 'pan-y' }}
+            />
+          )}
           <AnimatePresence mode="wait">
             {view === 'menu' && (
               <motion.div
@@ -99,7 +115,7 @@ export default function App() {
               >
                 <DeckSelectScreen
                   decks={decksHook.decks}
-                  onSelectDeck={handlePlayDeck}
+                  onStartGame={handleStartGame}
                   onBack={goBack}
                 />
               </motion.div>
@@ -116,6 +132,7 @@ export default function App() {
               >
                 <GameScreen
                   deckId={gameDeckId}
+                  gameSettings={gameSettings}
                   onComplete={handleGameComplete}
                   onBack={goBack}
                 />

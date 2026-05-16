@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import type { Quest, Session, CompletedEntry } from '../types'
+import type { Quest, Session, CompletedEntry, GameSettings } from '../types'
 import { saveSession, getActiveSession, getQuests } from '../db/stores'
 import { pickWeighted, updateWeightOnDiscard, resetWeightsIfCycleComplete } from '../utils/probability'
 
@@ -22,6 +22,7 @@ export function useGame() {
   const [completedEntries, setCompletedEntries] = useState<CompletedEntry[]>([])
   const [gameOver, setGameOver] = useState(false)
   const [totalQuests, setTotalQuests] = useState(0)
+  const [gameSettings, setGameSettings] = useState<GameSettings | null>(null)
 
   const sessionRef = useRef(session)
   sessionRef.current = session
@@ -30,14 +31,17 @@ export function useGame() {
     await saveSession(s)
   }, [])
 
-  const startGame = useCallback(async (deckId: string) => {
+  const startGame = useCallback(async (deckId: string, settings?: GameSettings) => {
+    if (settings) setGameSettings(settings)
+
     const existing = await getActiveSession(deckId)
     if (existing) {
       const allQuests = await getQuests(deckId)
       const completedSet = new Set(existing.completedQuests.map(q => q.questId))
       const discardedSet = existing.discardedQuestIds ?? []
+      const permDiscard = existing.gameSettings?.permanentDiscard ?? settings?.permanentDiscard ?? false
       const availableQuests = allQuests.filter(
-        q => !completedSet.has(q.id) && !discardedSet.includes(q.id)
+        q => !completedSet.has(q.id) && !(permDiscard && discardedSet.includes(q.id))
       )
 
       setHand(availableQuests.slice(0, HAND_SIZE).map(q => ({ ...q, flipped: false })))
@@ -50,10 +54,11 @@ export function useGame() {
       )
       setDrawCycle(existing.drawCycle ?? 0)
       setTotalQuests(allQuests.length)
+      setGameSettings(existing.gameSettings ?? settings ?? null)
 
       const w: Record<string, number> = {}
       for (const q of allQuests) {
-        w[q.id] = discardedSet.includes(q.id) ? 0.5 : 1
+        w[q.id] = permDiscard && discardedSet.includes(q.id) ? 0 : discardedSet.includes(q.id) ? 0.5 : 1
       }
       setWeights(w)
       setSession(existing)
@@ -100,6 +105,7 @@ export function useGame() {
       currentScore: 0,
       elapsedSeconds: 0,
       isActive: true,
+      gameSettings: settings ?? undefined,
     }
     setSession(newSession)
     setGameOver(false)
@@ -108,10 +114,14 @@ export function useGame() {
 
   const replaceCard = useCallback((cardId: string) => {
     setHand(prev => {
+      const permDiscard = gameSettings?.permanentDiscard ?? false
       const remainingPool = pool.length > 0 ? pool : []
+      const discardFilteredPool = permDiscard
+        ? remainingPool.filter(q => !(sessionRef.current?.discardedQuestIds ?? []).includes(q.id))
+        : remainingPool
       const availableWeights = resetWeightsIfCycleComplete(weights, [...drawnIds, ...completedQuestIds], drawnIds)
 
-      const picked = pickWeighted(remainingPool, availableWeights)
+      const picked = pickWeighted(discardFilteredPool, availableWeights)
       if (!picked) {
         const newHand = prev.filter(c => c.id !== cardId)
         if (newHand.length === 0) {
@@ -135,7 +145,7 @@ export function useGame() {
 
       return prev.map(c => c.id === cardId ? { ...picked, flipped: false } : c)
     })
-  }, [pool, weights, drawnIds, completedQuestIds])
+  }, [pool, weights, drawnIds, completedQuestIds, gameSettings])
 
   const flipCard = useCallback((cardId: string) => {
     setFlippedIds(prev => {
@@ -195,7 +205,15 @@ export function useGame() {
   }, [hand, score, completedEntries, replaceCard, persistSession])
 
   const discardQuest = useCallback((cardId: string) => {
-    setWeights(prev => updateWeightOnDiscard(prev, cardId))
+    setWeights(prev => {
+      const permDiscard = gameSettings?.permanentDiscard ?? false
+      if (permDiscard) {
+        const next = { ...prev }
+        delete next[cardId]
+        return next
+      }
+      return updateWeightOnDiscard(prev, cardId)
+    })
 
     if (sessionRef.current) {
       const updated = {
@@ -208,7 +226,7 @@ export function useGame() {
     }
 
     replaceCard(cardId)
-  }, [replaceCard, persistSession])
+  }, [replaceCard, persistSession, gameSettings])
 
   const saveTimer = useCallback((elapsedSeconds: number) => {
     if (sessionRef.current) {
@@ -235,6 +253,7 @@ export function useGame() {
     setDrawnIds([])
     setDrawCycle(0)
     setGameOver(false)
+    setGameSettings(null)
   }, [saveSession])
 
   return {
@@ -245,6 +264,7 @@ export function useGame() {
     session,
     gameOver,
     totalQuests,
+    gameSettings,
     startGame,
     flipCard,
     completeQuest,

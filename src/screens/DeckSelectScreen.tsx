@@ -1,20 +1,23 @@
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import { ArrowLeft } from 'lucide-react'
-import type { Deck } from '../types'
+import type { Deck, GameSettings } from '../types'
 import { resolveEmoji } from '../utils/formatters'
 import { useSettings } from '../context/SettingsContext'
+import PreGameSheet from '../components/PreGameSheet'
 
 interface Props {
   decks: Deck[]
-  onSelectDeck: (deckId: string) => void
+  onStartGame: (deckId: string, settings: GameSettings) => void
   onBack: () => void
 }
 
-export default function DeckSelectScreen({ decks, onSelectDeck, onBack }: Props) {
+export default function DeckSelectScreen({ decks, onStartGame, onBack }: Props) {
   const { settings } = useSettings()
   const disabledEmojis = settings.disabledEmojis || []
   const deckOrder = settings.deckOrder || []
   const deckEmoji = (e: string) => resolveEmoji(e, disabledEmojis)
+  const [preGameDeckId, setPreGameDeckId] = useState<string | null>(null)
 
   const sortedDecks = [...decks].sort((a, b) => {
     const ai = deckOrder.indexOf(a.id)
@@ -24,6 +27,15 @@ export default function DeckSelectScreen({ decks, onSelectDeck, onBack }: Props)
     if (bi === -1) return -1
     return ai - bi
   })
+
+  const handleDeckClick = (deckId: string) => {
+    setPreGameDeckId(deckId)
+  }
+
+  const handleStartGame = (deckId: string, gameSettings: GameSettings) => {
+    onStartGame(deckId, gameSettings)
+    setPreGameDeckId(null)
+  }
 
   return (
     <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
@@ -48,7 +60,7 @@ export default function DeckSelectScreen({ decks, onSelectDeck, onBack }: Props)
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08, type: 'spring', stiffness: 200 }}
             whileTap={{ scale: 0.97 }}
-            onClick={() => onSelectDeck(deck.id)}
+            onClick={() => handleDeckClick(deck.id)}
             className="w-full rounded-2xl flex flex-col items-center gap-2 p-6 shadow-xl text-center"
             style={{ backgroundColor: 'var(--surface)' }}
           >
@@ -62,6 +74,13 @@ export default function DeckSelectScreen({ decks, onSelectDeck, onBack }: Props)
           </motion.button>
         ))}
       </div>
+
+      <PreGameSheet
+        open={!!preGameDeckId}
+        deckId={preGameDeckId}
+        onClose={() => setPreGameDeckId(null)}
+        onStart={handleStartGame}
+      />
     </div>
   )
 }

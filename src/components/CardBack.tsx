@@ -17,7 +17,7 @@ export default function CardBack({ emoji, title, value, color, index, flipped, o
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, type: 'spring', stiffness: 200, damping: 20 }}
       onClick={flipped ? undefined : onFlip}
-      className="rounded-2xl flex flex-col items-center justify-center p-2 cursor-pointer relative overflow-hidden"
+      className="rounded-2xl flex flex-col items-center justify-center p-3 cursor-pointer relative overflow-hidden"
       style={{
         backgroundColor: 'var(--surface)',
         aspectRatio: '3/4',
@@ -28,18 +28,18 @@ export default function CardBack({ emoji, title, value, color, index, flipped, o
       <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: color }} />
 
       <div
-        className="w-10 h-10 rounded-full flex items-center justify-center mb-1"
+        className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
         style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
       >
-        <span className="text-xl">{emoji}</span>
+        <span className="text-2xl">{emoji}</span>
       </div>
 
-      <div className="text-[10px] font-semibold text-center leading-tight max-w-full px-1 line-clamp-2" style={{ color: 'var(--text-primary)' }}>
+      <div className="text-xs font-semibold text-center leading-tight max-w-full px-1 line-clamp-3" style={{ color: 'var(--text-primary)' }}>
         {title}
       </div>
 
       <div
-        className="mt-1 px-1.5 py-0.5 rounded-full text-[9px] font-bold"
+        className="mt-2 px-2 py-0.5 rounded-full text-[10px] font-bold"
         style={{ backgroundColor: color, color: 'white' }}
       >
         ★{value}
