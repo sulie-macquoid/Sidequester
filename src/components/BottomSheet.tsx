@@ -44,6 +44,7 @@ export default function BottomSheet({ open, onClose, title, children, footer }: 
         drag="y"
         dragConstraints={{ top: 0 }}
         dragElastic={{ top: 0, bottom: 0.4 }}
+        dragSnapToOrigin
         onDragEnd={(_, info) => { if (info.offset.y > 100) onClose() }}
         className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl max-h-[85vh] flex flex-col max-w-md mx-auto"
         style={{ backgroundColor: 'var(--surface)', maxHeight: `${Math.min(viewportHeight * 0.85, 85)}vh` }}
