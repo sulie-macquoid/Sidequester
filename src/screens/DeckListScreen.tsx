@@ -34,6 +34,7 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
   const [showImportInfo, setShowImportInfo] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<ParsedQuestRow[]>([])
+  const [importPowerups, setImportPowerups] = useState<string[] | undefined>(undefined)
   const [importError, setImportError] = useState<string | null>(null)
   const sortDecks = (ds: Deck[]) => [...ds].sort((a, b) => {
     const ai = deckOrder.indexOf(a.id)
@@ -98,7 +99,7 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
 
   const handleExport = async (deck: Deck) => {
     const quests = await getQuests(deck.id)
-    const csv = questsToCSV(quests)
+    const csv = questsToCSV(quests, deck.activePowerups)
     downloadCSV(`${deck.name.replace(/[^a-zA-Z0-9]/g, '_')}_quests.csv`, csv)
   }
 
@@ -111,6 +112,7 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
       return
     }
     setImportRows(result.rows)
+    setImportPowerups(result.enabledPowerups)
     setImportOpen(true)
     setShowImportInfo(false)
     setImportError(null)
@@ -339,8 +341,9 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
       <ImportSheet
         open={importOpen}
         rows={importRows}
+        enabledPowerups={importPowerups}
         decks={decks}
-        onClose={() => { setImportOpen(false); setImportRows([]) }}
+        onClose={() => { setImportOpen(false); setImportRows([]); setImportPowerups(undefined) }}
         onImported={() => setImportOpen(false)}
       />
 

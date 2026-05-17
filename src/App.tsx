@@ -205,6 +205,7 @@ export default function App() {
                   onCreateQuest={decksHook.createQuest}
                   onUpdateQuest={decksHook.updateQuest}
                   onDeleteQuest={decksHook.removeQuest}
+                  onUpdateDeck={decksHook.updateDeck}
                   onBack={goBack}
                 />
               </motion.div>

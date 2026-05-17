@@ -9,6 +9,7 @@ import BottomSheet from '../components/BottomSheet'
 import EmojiPicker from '../components/EmojiPicker'
 import ColorSwatches from '../components/ColorSwatches'
 import ImportSheet from '../components/ImportSheet'
+import PowerupToggleSheet from '../components/PowerupToggleSheet'
 
 interface Props {
   deck: Deck
@@ -16,10 +17,11 @@ interface Props {
   onCreateQuest: (deckId: string, data: Omit<Quest, 'id' | 'deckId' | 'createdAt'>) => Promise<Quest>
   onUpdateQuest: (id: string, data: Partial<Quest>) => Promise<void>
   onDeleteQuest: (id: string) => void
+  onUpdateDeck: (id: string, data: Partial<Deck>) => Promise<void>
   onBack: () => void
 }
 
-export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdateQuest, onDeleteQuest, onBack }: Props) {
+export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdateQuest, onDeleteQuest, onUpdateDeck, onBack }: Props) {
   const { settings } = useSettings()
   const disabledEmojis = settings.disabledEmojis || []
   const deckEmoji = resolveEmoji(deck.emoji, disabledEmojis)
@@ -29,7 +31,9 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
   const [showImportInfo, setShowImportInfo] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importRows, setImportRows] = useState<ParsedQuestRow[]>([])
+  const [importPowerups, setImportPowerups] = useState<string[] | undefined>(undefined)
   const [importError, setImportError] = useState<string | null>(null)
+  const [powerupToggleOpen, setPowerupToggleOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formTitle, setFormTitle] = useState('')
@@ -91,6 +95,7 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
       return
     }
     setImportRows(result.rows)
+    setImportPowerups(result.enabledPowerups)
     setImportOpen(true)
     setImportError(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -142,9 +147,18 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
           </div>
         )}
 
-        <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
-          <div className="w-1 h-8 rounded-full" style={{ backgroundColor: deck.color }} />
-          <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{quests.length} quests</span>
+        <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: 'var(--border)' }}>
+          <div className="flex items-center gap-2">
+            <div className="w-1 h-8 rounded-full" style={{ backgroundColor: deck.color }} />
+            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{quests.length} quests</span>
+          </div>
+          <button
+            onClick={() => setPowerupToggleOpen(true)}
+            className="text-xs font-medium px-3 py-1.5 rounded-lg min-h-[36px]"
+            style={{ backgroundColor: 'rgba(155,89,182,0.15)', color: '#9B59B6' }}
+          >
+            ⚡ Powerups
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -383,10 +397,18 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
       <ImportSheet
         open={importOpen}
         rows={importRows}
+        enabledPowerups={importPowerups}
         decks={[deck]}
         defaultDeckId={deck.id}
-        onClose={() => { setImportOpen(false); setImportRows([]) }}
+        onClose={() => { setImportOpen(false); setImportRows([]); setImportPowerups(undefined) }}
         onImported={() => setImportOpen(false)}
+      />
+
+      <PowerupToggleSheet
+        open={powerupToggleOpen}
+        deck={deck}
+        onClose={() => setPowerupToggleOpen(false)}
+        onUpdate={(deckId, activePowerups) => onUpdateDeck(deckId, { activePowerups })}
       />
     </>
   )

@@ -33,7 +33,7 @@ export function useDecks() {
     setSelectedDeckId(deckId)
   }, [])
 
-  const createDeck = useCallback(async (data: { name: string; description?: string; emoji: string; color: string }) => {
+  const createDeck = useCallback(async (data: { name: string; description?: string; emoji: string; color: string; activePowerups?: string[] }) => {
     const deck: Deck = {
       id: uid(),
       name: data.name,
@@ -41,6 +41,7 @@ export function useDecks() {
       emoji: data.emoji,
       color: data.color,
       createdAt: Date.now(),
+      activePowerups: data.activePowerups,
     }
     await saveDeck(deck)
     await loadDecks()

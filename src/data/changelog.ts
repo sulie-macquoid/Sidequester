@@ -6,6 +6,27 @@ export interface ReleaseEntry {
 
 export const CHANGELOG: ReleaseEntry[] = [
   {
+    version: '1.6.0',
+    label: 'Streaks & Powerups',
+    items: [
+      'Streak system — consecutive completes build a streak, discarding resets it',
+      'Double Down powerup — next complete gives 2× points (unlock: 3 streak, recharge: 6)',
+      'Freeze Time powerup — pauses timer for 5 minutes with blue pulse animation (unlock: 5 streak, recharge: 10)',
+      'Fresh Draw powerup — replace entire hand from pool (unlock: 7 streak, recharge: 14)',
+      '3 streak powerup buttons at bottom of game screen with lock/recharge indicators',
+      '4 active powerup cards — Joker (random 100–300 pts), Mulligan (recover last discard),'
+        + ' Star Power (+50 to all hand cards), Shuffle (redraw hand)',
+      'Powerup cards have 5% draw chance per slot replacement, max 1 on screen, each drawn once',
+      'Per-deck powerup card toggles — "⚡ Powerups" button on Deck Detail screen',
+      'Streak System toggle in pre-game settings',
+      'Powerup card CSV header (#powerups:) — import/export preserves toggle settings',
+      'Backward-compatible CSV import — old files default to all powerups enabled',
+      'Double Down badge with bounce animation on card values',
+      'Star Power boost (+50) on boosted hand cards with ⭐ indicator',
+      'Mulligan selection overlay — tap which card to swap with recovered discard',
+    ],
+  },
+  {
     version: '1.5.4',
     label: 'Bug Fix Pass',
     items: [
@@ -146,7 +167,7 @@ export const CHANGELOG: ReleaseEntry[] = [
   },
 ]
 
-export const CURRENT_VERSION = '1.5.4'
+export const CURRENT_VERSION = '1.6.0'
 
 export function getLatestRelease(): ReleaseEntry {
   return CHANGELOG[0]

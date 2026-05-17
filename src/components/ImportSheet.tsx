@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { motion } from 'motion/react'
 import { X } from 'lucide-react'
 import type { Deck, ParsedQuestRow } from '../types'
+import { POWERUP_CARDS } from '../types'
 import EmojiPicker from './EmojiPicker'
 import ColorSwatches from './ColorSwatches'
 import { useDecks } from '../hooks/useDecks'
@@ -11,12 +12,13 @@ interface Props {
   rows: ParsedQuestRow[]
   decks: Deck[]
   defaultDeckId?: string
+  enabledPowerups?: string[]
   onClose: () => void
   onImported: () => void
 }
 
-export default function ImportSheet({ open, rows, decks, defaultDeckId, onClose, onImported }: Props) {
-  const { createDeck, batchCreateQuests } = useDecks()
+export default function ImportSheet({ open, rows, decks, defaultDeckId, enabledPowerups, onClose, onImported }: Props) {
+  const { createDeck, batchCreateQuests, updateDeck } = useDecks()
 
   const [target, setTarget] = useState<'new' | string>(defaultDeckId ?? 'new')
   const [newName, setNewName] = useState('')
@@ -34,9 +36,18 @@ export default function ImportSheet({ open, rows, decks, defaultDeckId, onClose,
 
     try {
       if (isNewDeck) {
-        const deck = await createDeck({ name: newName.trim(), description: newDesc.trim(), emoji: newEmoji, color: newColor })
+        const deck = await createDeck({
+          name: newName.trim(),
+          description: newDesc.trim(),
+          emoji: newEmoji,
+          color: newColor,
+          activePowerups: enabledPowerups ?? POWERUP_CARDS.map(p => p.key),
+        })
         await batchCreateQuests(deck.id, rows)
       } else {
+        if (enabledPowerups) {
+          await updateDeck(target, { activePowerups: enabledPowerups })
+        }
         await batchCreateQuests(target, rows)
       }
       onImported()

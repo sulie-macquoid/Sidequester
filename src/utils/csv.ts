@@ -6,6 +6,7 @@ export interface CSVParseResult {
   rows: ParsedQuestRow[]
   error?: string
   rowCount: number
+  enabledPowerups?: string[]
 }
 
 const VALID_COLORS = [
@@ -30,6 +31,15 @@ function closestPaletteColor(hex: string): string {
 }
 
 export function parseCSVText(text: string): CSVParseResult {
+  const lines = text.split('\n')
+  let enabledPowerups: string[] | undefined
+  const firstLine = lines[0]?.trim()
+  if (firstLine?.startsWith('#powerups:')) {
+    const rest = firstLine.slice('#powerups:'.length).trim()
+    enabledPowerups = rest.split(',').map(s => s.trim()).filter(Boolean)
+    text = lines.slice(1).join('\n')
+  }
+
   const result = Papa.parse(text, {
     header: true,
     skipEmptyLines: true,
@@ -72,15 +82,16 @@ export function parseCSVText(text: string): CSVParseResult {
 
   const warning = skippedCount > 0 ? `${skippedCount} row${skippedCount !== 1 ? 's' : ''} skipped (missing title)` : undefined
 
-  return { valid: true, rows, rowCount: rows.length, error: warning }
+  return { valid: true, rows, rowCount: rows.length, error: warning, enabledPowerups }
 }
 
-export function questsToCSV(quests: { title: string; description: string; value: number; emoji: string; color: string }[]): string {
+export function questsToCSV(quests: { title: string; description: string; value: number; emoji: string; color: string }[], powerups?: string[]): string {
   const header = 'title,description,value,emoji,color'
+  const powerupLine = powerups && powerups.length > 0 ? `#powerups:${powerups.join(',')}\n` : ''
   const rows = quests.map(q =>
     `"${q.title.replace(/"/g, '""')}","${q.description.replace(/"/g, '""')}",${q.value},${q.emoji},${q.color}`
   )
-  return [header, ...rows].join('\n')
+  return powerupLine + [header, ...rows].join('\n')
 }
 
 export function downloadCSV(filename: string, csv: string) {

@@ -4,9 +4,11 @@ import { ArrowLeft, RotateCcw } from 'lucide-react'
 import { useGame } from '../hooks/useGame'
 import { useTimer } from '../hooks/useTimer'
 import { formatTime, triggerHaptic } from '../utils/formatters'
-import type { GameSettings } from '../types'
+import type { GameSettings, HandPowerupCard } from '../types'
 import CardBack from '../components/CardBack'
 import CardFront from '../components/CardFront'
+import PowerupCardFace from '../components/PowerupCardFace'
+import StreakButton from '../components/StreakButton'
 import CompletedPopup from '../components/CompletedPopup'
 import BottomSheet from '../components/BottomSheet'
 
@@ -71,10 +73,17 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   const [resetTimeEnabled, setResetTimeEnabled] = useState(false)
   const [resetTimeInput, setResetTimeInput] = useState('30')
   const [resetPermanentDiscard, setResetPermanentDiscard] = useState(false)
+  const [freezeStartedAt, setFreezeStartedAt] = useState<number | null>(null)
+  const [freezeSavedElapsed, setFreezeSavedElapsed] = useState(0)
+  const [mulliganSelecting, setMulliganSelecting] = useState(false)
   const timerRef = useRef(timer)
   timerRef.current = timer
   const startedRef = useRef(false)
   const gameOverHandled = useRef(false)
+  const freezeStartedRef = useRef<number | null>(null)
+  freezeStartedRef.current = freezeStartedAt
+
+  const streakEnabled = gameSettings?.streakEnabled ?? true
 
   useEffect(() => {
     game.startGame(deckId, gameSettings ?? undefined)
@@ -127,10 +136,12 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
 
   useEffect(() => {
     if (!game.gameSettings?.timeConstraintEnabled || !game.session?.startedAt || !started) return
-    const timeLimit = game.gameSettings.timeLimitSeconds
-    const endTime = game.session.startedAt + timeLimit * 1000
+    const rawEndTime = game.session.startedAt + game.gameSettings.timeLimitSeconds * 1000
     const check = setInterval(() => {
-      const remaining = Math.floor((endTime - Date.now()) / 1000)
+      const adjustedEndTime = freezeStartedRef.current
+        ? rawEndTime + (Date.now() - freezeStartedRef.current)
+        : rawEndTime
+      const remaining = Math.floor((adjustedEndTime - Date.now()) / 1000)
       if (remaining <= 0) {
         if (!game.gameOver) {
           timer.pause()
@@ -140,6 +151,33 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     }, 1000)
     return () => clearInterval(check)
   }, [game.gameSettings?.timeConstraintEnabled, game.session?.startedAt, started, game.gameOver])
+
+  useEffect(() => {
+    if (game.timeFrozen && !freezeStartedAt) {
+      timer.pause()
+      setFreezeSavedElapsed(timer.elapsed)
+      setFreezeStartedAt(Date.now())
+    }
+    if (!game.timeFrozen && freezeStartedAt) {
+      setFreezeStartedAt(null)
+    }
+  }, [game.timeFrozen])
+
+  useEffect(() => {
+    if (!freezeStartedAt) return
+    const interval = setInterval(() => {
+      if (Date.now() - freezeStartedAt! >= 300000) {
+        game.thawTime()
+        if (game.gameSettings?.timeConstraintEnabled) {
+          timer.start()
+        } else {
+          timer.setElapsed(freezeSavedElapsed)
+          timer.start()
+        }
+      }
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [freezeStartedAt])
 
   const triggerScoreAnim = () => {
     setScoreAnim(true)
@@ -159,10 +197,34 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     triggerHaptic()
   }
 
+  const handlePowerupActivate = (cardId: string) => {
+    game.completeQuest(cardId)
+    setExpandedCardId(null)
+    triggerHaptic()
+    setMulliganSelecting(false)
+  }
+
   const SWIPE_THRESHOLD = 80
 
   const handleDragEnd = (_: any, info: PanInfo, cardId: string) => {
     setDragX(0)
+    const card = game.hand.find(c => c.id === cardId)
+    if (!card) return
+
+    if (card.type === 'powerup') {
+      if (info.offset.x > SWIPE_THRESHOLD) {
+        const pc = card as HandPowerupCard
+        if (pc.powerupKey === 'mulligan') {
+          setMulliganSelecting(true)
+          game.completeQuest(cardId)
+          setExpandedCardId(null)
+          return
+        }
+        handlePowerupActivate(cardId)
+      }
+      return
+    }
+
     if (info.offset.x > SWIPE_THRESHOLD) {
       handleComplete(cardId)
     } else if (info.offset.x < -SWIPE_THRESHOLD) {
@@ -171,10 +233,22 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   }
 
   const handleCardClick = (cardId: string) => {
+    const card = game.hand.find(c => c.id === cardId)
+    if (!card) return
+    if (card.type === 'powerup') {
+      setExpandedCardId(cardId)
+      return
+    }
     setExpandedCardId(cardId)
   }
 
   const handleCollapse = () => {
+    setExpandedCardId(null)
+  }
+
+  const handleMulliganTap = (targetCardId: string) => {
+    game.handleMulliganSelect(targetCardId)
+    setMulliganSelecting(false)
     setExpandedCardId(null)
   }
 
@@ -188,6 +262,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     setResetTimeEnabled(game.gameSettings?.timeConstraintEnabled ?? false)
     setResetTimeInput(String(Math.floor(game.gameSettings?.timeLimitSeconds ?? 1800) / 60))
     setResetPermanentDiscard(game.gameSettings?.permanentDiscard ?? false)
+    setFreezeStartedAt(null)
     setShowSettingsAfterReset(true)
   }
 
@@ -205,12 +280,20 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   const expandedCard = expandedCardId ? game.hand.find(c => c.id === expandedCardId) : null
 
   const isTimeConstraint = game.gameSettings?.timeConstraintEnabled && game.session?.startedAt
-  const endTimeMs = isTimeConstraint
+  const rawEndTimeMs = isTimeConstraint
     ? game.session!.startedAt + game.gameSettings!.timeLimitSeconds * 1000
     : 0
+  const adjustedEndTimeMs = freezeStartedAt && isTimeConstraint
+    ? rawEndTimeMs + (Date.now() - freezeStartedAt)
+    : rawEndTimeMs
   const remainingSeconds = isTimeConstraint
-    ? Math.max(0, Math.floor((endTimeMs - Date.now()) / 1000))
+    ? Math.max(0, Math.floor((adjustedEndTimeMs - Date.now()) / 1000))
     : 0
+
+  const freezeRemainingMs = freezeStartedAt
+    ? Math.max(0, 300000 - (Date.now() - freezeStartedAt))
+    : 0
+  const freezeRemainingSecs = Math.ceil(freezeRemainingMs / 1000)
 
   const GLOW_THRESHOLD = 80
 
@@ -224,29 +307,47 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          <motion.span
-            animate={scoreAnim ? { scale: [1, 1.3, 1] } : {}}
-            transition={{ duration: 0.2 }}
-            className="font-bold text-sm"
-            style={{ color: '#FECA57' }}
-          >
-            {game.score}
-          </motion.span>
-          <span style={{ color: 'var(--text-secondary)' }}>|</span>
-          <span style={{ color: 'var(--text-secondary)' }}>
-            {completedCount}/{game.totalQuests}
-          </span>
-          <span style={{ color: 'var(--text-secondary)' }}>•</span>
-          <span style={{ color: 'var(--text-secondary)' }}>
-            {game.totalQuests - completedCount} left
-          </span>
-          <span style={{ color: 'var(--text-secondary)' }}>•</span>
-          <span
-            className="font-mono"
-            style={{ color: isTimeConstraint && remainingSeconds <= 60 ? '#DC143C' : 'var(--text-primary)' }}
-          >
-            {isTimeConstraint ? formatTime(remainingSeconds) : formatTime(timer.elapsed)}
-          </span>
+          {freezeStartedAt && (
+            <motion.span
+              className="font-bold text-sm font-mono"
+              style={{ color: '#54A0FF' }}
+              animate={{
+                textShadow: ['0 0 4px rgba(84,160,255,0.3)', '0 0 12px rgba(0,255,255,0.6)', '0 0 4px rgba(84,160,255,0.3)'],
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              ❄️ {formatTime(freezeRemainingSecs)}
+            </motion.span>
+          )}
+          {!freezeStartedAt && (
+            <motion.span
+              animate={scoreAnim ? { scale: [1, 1.3, 1] } : {}}
+              transition={{ duration: 0.2 }}
+              className="font-bold text-sm"
+              style={{ color: '#FECA57' }}
+            >
+              {game.score}
+            </motion.span>
+          )}
+          {!freezeStartedAt && (
+            <>
+              <span style={{ color: 'var(--text-secondary)' }}>|</span>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                {completedCount}/{game.totalQuests}
+              </span>
+              <span style={{ color: 'var(--text-secondary)' }}>•</span>
+              <span style={{ color: 'var(--text-secondary)' }}>
+                {game.totalQuests - completedCount} left
+              </span>
+              <span style={{ color: 'var(--text-secondary)' }}>•</span>
+              <span
+                className="font-mono"
+                style={{ color: isTimeConstraint && remainingSeconds <= 60 ? '#DC143C' : 'var(--text-primary)' }}
+              >
+                {isTimeConstraint ? formatTime(remainingSeconds) : formatTime(timer.elapsed)}
+              </span>
+            </>
+          )}
         </div>
       </div>
 
@@ -280,14 +381,27 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
                 style={{ aspectRatio: '3/4', pointerEvents: isExpanded ? 'none' : 'auto' }}
               >
                 <div style={{ opacity: isExpanded ? 0 : 1 }}>
+                  {mulliganSelecting && card.type !== 'powerup' ? (
+                    <motion.div
+                      className="absolute inset-0 z-10 rounded-2xl flex items-center justify-center cursor-pointer"
+                      style={{ backgroundColor: 'rgba(84,160,255,0.3)' }}
+                      onClick={() => handleMulliganTap(card.id)}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <span className="text-xs font-bold" style={{ color: 'white' }}>TAP TO<br />SWAP</span>
+                    </motion.div>
+                  ) : null}
                   <CardBack
                     emoji={card.emoji}
                     title={card.title}
                     value={card.value}
                     color={card.color}
-                    index={game.hand.indexOf(card)}
+                    index={game.hand.indexOf(card as any)}
                     flipped={false}
                     onFlip={() => handleCardClick(card.id)}
+                    isPowerup={card.type === 'powerup'}
+                    showDoubleDownBadge={game.doubleDownActive && card.type !== 'powerup'}
+                    displayValue={game.starBoostedCardIds.has(card.id) ? card.value + 50 : undefined}
                   />
                 </div>
               </motion.div>
@@ -315,20 +429,36 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
                 transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 onClick={e => e.stopPropagation()}
               >
-                <SwipeableCard
-                  cardId={expandedCard.id}
-                  onDragUpdate={setDragX}
-                  onDragEnd={(info, id) => handleDragEnd(undefined, info, id)}
-                >
-                  <CardFront
-                    emoji={expandedCard.emoji}
-                    title={expandedCard.title}
-                    description={expandedCard.description}
-                    value={expandedCard.value}
-                    color={expandedCard.color}
-                    onFlip={handleCollapse}
-                  />
-                </SwipeableCard>
+                {expandedCard.type === 'powerup' ? (
+                  <SwipeableCard
+                    cardId={expandedCard.id}
+                    onDragUpdate={setDragX}
+                    onDragEnd={(info, id) => handleDragEnd(undefined, info, id)}
+                  >
+                    <PowerupCardFace
+                      powerupKey={(expandedCard as HandPowerupCard).powerupKey}
+                      value={expandedCard.value}
+                      onActivate={() => handlePowerupActivate(expandedCard.id)}
+                    />
+                  </SwipeableCard>
+                ) : (
+                  <SwipeableCard
+                    cardId={expandedCard.id}
+                    onDragUpdate={setDragX}
+                    onDragEnd={(info, id) => handleDragEnd(undefined, info, id)}
+                  >
+                    <CardFront
+                      emoji={expandedCard.emoji}
+                      title={expandedCard.title}
+                      description={expandedCard.description}
+                      value={expandedCard.value}
+                      color={expandedCard.color}
+                      onFlip={handleCollapse}
+                      displayValue={game.starBoostedCardIds.has(expandedCard.id) ? expandedCard.value + 50 : undefined}
+                      showDoubleDownBadge={game.doubleDownActive}
+                    />
+                  </SwipeableCard>
+                )}
               </motion.div>
             </motion.div>
           )}
@@ -340,6 +470,30 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
           </div>
         )}
       </div>
+
+      {streakEnabled && !freezeStartedAt && (
+        <div className="flex justify-center gap-2 px-4 pb-2">
+          {game.streak > 0 && (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: 'var(--surface)', color: '#54A0FF' }}>
+              🔥 {game.streak}
+            </div>
+          )}
+        </div>
+      )}
+
+      {streakEnabled && !freezeStartedAt && (
+        <div className="flex justify-center gap-2 px-4 pb-3">
+          {([{ key: 'doubleDown' as const }, { key: 'freezeTime' as const }, { key: 'freshDraw' as const }] as const).map(({ key }) => (
+            <StreakButton
+              key={key}
+              powerupKey={key}
+              streak={game.streak}
+              canUse={game.canUseStreakPowerup(key)}
+              onActivate={() => game.activateStreakPowerup(key)}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="px-4 pb-6 pt-1 flex justify-center gap-3">
         <button

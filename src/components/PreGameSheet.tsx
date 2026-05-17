@@ -19,6 +19,7 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
   const [timeEnabled, setTimeEnabled] = useState(false)
   const [timeInput, setTimeInput] = useState('30')
   const [permanentDiscard, setPermanentDiscard] = useState(false)
+  const [streakEnabled, setStreakEnabled] = useState(true)
   const [step, setStep] = useState<'session' | 'settings'>('session')
 
   const savedSettings = deckId ? settings.gameSettings?.[deckId] : null
@@ -34,10 +35,12 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
         setTimeEnabled(saved.timeConstraintEnabled)
         setTimeInput(String(Math.floor(saved.timeLimitSeconds / 60)))
         setPermanentDiscard(saved.permanentDiscard)
+        setStreakEnabled(saved.streakEnabled ?? true)
       } else {
         setTimeEnabled(DEFAULT_GAME_SETTINGS.timeConstraintEnabled)
         setTimeInput(String(Math.floor(DEFAULT_GAME_SETTINGS.timeLimitSeconds / 60)))
         setPermanentDiscard(DEFAULT_GAME_SETTINGS.permanentDiscard)
+        setStreakEnabled(DEFAULT_GAME_SETTINGS.streakEnabled ?? true)
       }
     }
   }, [deckId])
@@ -51,6 +54,7 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
       timeConstraintEnabled: timeEnabled,
       timeLimitSeconds: timeSeconds,
       permanentDiscard,
+      streakEnabled,
     }
     await persistSettings(gameSettings)
     onStart(deckId, gameSettings, true)
@@ -69,6 +73,7 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
       timeConstraintEnabled: timeEnabled,
       timeLimitSeconds: timeSeconds,
       permanentDiscard,
+      streakEnabled,
     }
     await persistSettings(gameSettings)
     onStart(deckId, gameSettings, false)
@@ -209,6 +214,32 @@ export default function PreGameSheet({ open, deckId, onClose, onStart }: Props) 
                     <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>minutes</span>
                   </div>
                 )}
+              </div>
+
+              <div>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div
+                    onClick={() => setStreakEnabled(!streakEnabled)}
+                    className="w-10 h-6 rounded-full relative transition-colors shrink-0"
+                    style={{ backgroundColor: streakEnabled ? '#54A0FF' : 'var(--bg)' }}
+                  >
+                    <div
+                      className="w-4 h-4 rounded-full absolute top-1 transition-transform"
+                      style={{
+                        backgroundColor: 'white',
+                        transform: streakEnabled ? 'translateX(20px)' : 'translateX(4px)',
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      Streak System
+                    </div>
+                    <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                      Earn streak powerups by completing quests — Double Down, Freeze Time, Fresh Draw
+                    </div>
+                  </div>
+                </label>
               </div>
             </div>
           )}
