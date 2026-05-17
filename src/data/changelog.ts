@@ -23,6 +23,8 @@ export const CHANGELOG: ReleaseEntry[] = [
       'Android adaptive icons (maskable)',
       'Input validation, color validation, accessibility improvements',
       'Bottom sheets spring back on partial swipe (dragSnapToOrigin)',
+      'Fixed Play Again from deck complete screen — now properly resets the game',
+      'Web Audio haptic fallback — card swipes produce feedback on iOS too',
     ],
   },
   {

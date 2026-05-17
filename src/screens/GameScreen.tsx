@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform, type PanInfo } f
 import { ArrowLeft, RotateCcw } from 'lucide-react'
 import { useGame } from '../hooks/useGame'
 import { useTimer } from '../hooks/useTimer'
-import { formatTime } from '../utils/formatters'
+import { formatTime, triggerHaptic } from '../utils/formatters'
 import type { GameSettings } from '../types'
 import CardBack from '../components/CardBack'
 import CardFront from '../components/CardFront'
@@ -101,6 +101,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     if (game.gameOver && started && !gameOverHandled.current) {
       gameOverHandled.current = true
       timer.pause()
+      game.endGame()
       const timeout = setTimeout(() => onComplete({
         score: game.score,
         completedCount: game.completedEntries.length,
@@ -149,13 +150,13 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     game.completeQuest(cardId)
     triggerScoreAnim()
     setExpandedCardId(null)
-    if (navigator.vibrate) navigator.vibrate(10)
+    triggerHaptic()
   }
 
   const handleDiscard = (cardId: string) => {
     game.discardQuest(cardId)
     setExpandedCardId(null)
-    if (navigator.vibrate) navigator.vibrate(10)
+    triggerHaptic()
   }
 
   const SWIPE_THRESHOLD = 80
