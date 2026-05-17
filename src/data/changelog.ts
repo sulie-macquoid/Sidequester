@@ -21,6 +21,7 @@ export const CHANGELOG: ReleaseEntry[] = [
       'Fixed post-thaw interval race condition causing redundant timer.start()',
       'Added cancel button to mulligan selection overlay so player can escape without swapping',
       'Fixed handleApplySettings in mid-game reset omitting streakEnabled preference',
+      'Fixed imported decks not appearing in deck list until page reload (duplicate useDecks instance)',
     ],
   },
   {

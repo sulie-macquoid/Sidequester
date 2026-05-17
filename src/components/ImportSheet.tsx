@@ -1,11 +1,10 @@
 import { useState, useCallback } from 'react'
 import { motion } from 'motion/react'
 import { X } from 'lucide-react'
-import type { Deck, ParsedQuestRow } from '../types'
+import type { Deck, ParsedQuestRow, Quest } from '../types'
 import { POWERUP_CARDS } from '../types'
 import EmojiPicker from './EmojiPicker'
 import ColorSwatches from './ColorSwatches'
-import { useDecks } from '../hooks/useDecks'
 
 interface Props {
   open: boolean
@@ -13,12 +12,14 @@ interface Props {
   decks: Deck[]
   defaultDeckId?: string
   enabledPowerups?: string[]
+  onCreateDeck?: (data: { name: string; description?: string; emoji: string; color: string; activePowerups: string[] }) => Promise<Deck>
+  onBatchCreateQuests: (deckId: string, rows: ParsedQuestRow[]) => Promise<Quest[]>
+  onUpdateDeck: (id: string, data: Partial<Deck>) => Promise<void>
   onClose: () => void
   onImported: () => void
 }
 
-export default function ImportSheet({ open, rows, decks, defaultDeckId, enabledPowerups, onClose, onImported }: Props) {
-  const { createDeck, batchCreateQuests, updateDeck } = useDecks()
+export default function ImportSheet({ open, rows, decks, defaultDeckId, enabledPowerups, onCreateDeck, onBatchCreateQuests, onUpdateDeck, onClose, onImported }: Props) {
 
   const [target, setTarget] = useState<'new' | string>(defaultDeckId ?? 'new')
   const [newName, setNewName] = useState('')
@@ -36,25 +37,26 @@ export default function ImportSheet({ open, rows, decks, defaultDeckId, enabledP
 
     try {
       if (isNewDeck) {
-        const deck = await createDeck({
+        if (!onCreateDeck) return
+        const deck = await onCreateDeck({
           name: newName.trim(),
           description: newDesc.trim(),
           emoji: newEmoji,
           color: newColor,
           activePowerups: enabledPowerups ?? POWERUP_CARDS.map(p => p.key),
         })
-        await batchCreateQuests(deck.id, rows)
+        await onBatchCreateQuests(deck.id, rows)
       } else {
         if (enabledPowerups) {
-          await updateDeck(target, { activePowerups: enabledPowerups })
+          await onUpdateDeck(target, { activePowerups: enabledPowerups })
         }
-        await batchCreateQuests(target, rows)
+        await onBatchCreateQuests(target, rows)
       }
       onImported()
     } finally {
       setImporting(false)
     }
-  }, [canImport, importing, isNewDeck, createDeck, newName, newDesc, newEmoji, newColor, batchCreateQuests, target, rows, onImported])
+  }, [canImport, importing, isNewDeck, onCreateDeck, newName, newDesc, newEmoji, newColor, onBatchCreateQuests, onUpdateDeck, target, enabledPowerups, rows, onImported])
 
   if (!open) return null
 

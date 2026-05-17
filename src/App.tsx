@@ -183,6 +183,7 @@ export default function App() {
                     setView('deckDetail', 'forward')
                   }}
                   onCreateDeck={decksHook.createDeck}
+                  onBatchCreateQuests={decksHook.batchCreateQuests}
                   onUpdateDeck={decksHook.updateDeck}
                   onDeleteDeck={decksHook.removeDeck}
                   onBack={goBack}
@@ -203,6 +204,7 @@ export default function App() {
                   deck={decksHook.selectedDeck}
                   quests={decksHook.quests}
                   onCreateQuest={decksHook.createQuest}
+                  onBatchCreateQuests={decksHook.batchCreateQuests}
                   onUpdateQuest={decksHook.updateQuest}
                   onDeleteQuest={decksHook.removeQuest}
                   onUpdateDeck={decksHook.updateDeck}

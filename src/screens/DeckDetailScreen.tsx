@@ -15,13 +15,14 @@ interface Props {
   deck: Deck
   quests: Quest[]
   onCreateQuest: (deckId: string, data: Omit<Quest, 'id' | 'deckId' | 'createdAt'>) => Promise<Quest>
+  onBatchCreateQuests: (deckId: string, rows: ParsedQuestRow[]) => Promise<Quest[]>
   onUpdateQuest: (id: string, data: Partial<Quest>) => Promise<void>
   onDeleteQuest: (id: string) => void
   onUpdateDeck: (id: string, data: Partial<Deck>) => Promise<void>
   onBack: () => void
 }
 
-export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdateQuest, onDeleteQuest, onUpdateDeck, onBack }: Props) {
+export default function DeckDetailScreen({ deck, quests, onCreateQuest, onBatchCreateQuests, onUpdateQuest, onDeleteQuest, onUpdateDeck, onBack }: Props) {
   const { settings } = useSettings()
   const disabledEmojis = settings.disabledEmojis || []
   const deckEmoji = resolveEmoji(deck.emoji, disabledEmojis)
@@ -400,6 +401,8 @@ export default function DeckDetailScreen({ deck, quests, onCreateQuest, onUpdate
         enabledPowerups={importPowerups}
         decks={[deck]}
         defaultDeckId={deck.id}
+        onBatchCreateQuests={onBatchCreateQuests}
+        onUpdateDeck={onUpdateDeck}
         onClose={() => { setImportOpen(false); setImportRows([]); setImportPowerups(undefined) }}
         onImported={() => setImportOpen(false)}
       />

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, Reorder } from 'motion/react'
 import { Plus, ArrowLeft, Upload, Download, Trash2, Pen, GripVertical } from 'lucide-react'
-import type { Deck, ParsedQuestRow } from '../types'
+import type { Deck, ParsedQuestRow, Quest } from '../types'
 import { parseCSVFile, questsToCSV, downloadCSV } from '../utils/csv'
 import { getQuests } from '../db/stores'
 import { resolveEmoji } from '../utils/formatters'
@@ -14,13 +14,14 @@ import ImportSheet from '../components/ImportSheet'
 interface Props {
   decks: Deck[]
   onSelectDeck: (deckId: string) => void
-  onCreateDeck: (data: { name: string; description?: string; emoji: string; color: string }) => Promise<Deck>
+  onCreateDeck: (data: { name: string; description?: string; emoji: string; color: string; activePowerups?: string[] }) => Promise<Deck>
+  onBatchCreateQuests: (deckId: string, rows: ParsedQuestRow[]) => Promise<Quest[]>
   onUpdateDeck: (id: string, data: Partial<Deck>) => Promise<void>
   onDeleteDeck: (id: string) => void
   onBack: () => void
 }
 
-export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUpdateDeck, onDeleteDeck, onBack }: Props) {
+export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onBatchCreateQuests, onUpdateDeck, onDeleteDeck, onBack }: Props) {
   const { settings, updateSettings } = useSettings()
   const disabledEmojis = settings.disabledEmojis || []
   const deckEmoji = (e: string) => resolveEmoji(e, disabledEmojis)
@@ -343,6 +344,9 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
         rows={importRows}
         enabledPowerups={importPowerups}
         decks={decks}
+        onCreateDeck={onCreateDeck}
+        onBatchCreateQuests={onBatchCreateQuests}
+        onUpdateDeck={onUpdateDeck}
         onClose={() => { setImportOpen(false); setImportRows([]); setImportPowerups(undefined) }}
         onImported={() => setImportOpen(false)}
       />
