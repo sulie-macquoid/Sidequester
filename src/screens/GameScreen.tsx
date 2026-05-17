@@ -73,6 +73,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   const [resetTimeEnabled, setResetTimeEnabled] = useState(false)
   const [resetTimeInput, setResetTimeInput] = useState('30')
   const [resetPermanentDiscard, setResetPermanentDiscard] = useState(false)
+  const [resetStreakEnabled, setResetStreakEnabled] = useState(true)
   const [freezeStartedAt, setFreezeStartedAt] = useState<number | null>(null)
   const [freezeSavedElapsed, setFreezeSavedElapsed] = useState(0)
   const [mulliganSelecting, setMulliganSelecting] = useState(false)
@@ -156,6 +157,10 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
       setFreezeStartedAt(Date.now())
     }
     if (!game.timeFrozen && freezeStartedAt) {
+      const duration = Date.now() - freezeStartedAt
+      if (duration > 0 && duration < 300000) {
+        game.addFrozenCompensation(duration)
+      }
       setFreezeStartedAt(null)
     }
   }, [game.timeFrozen])
@@ -165,6 +170,8 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     const startedAt = freezeStartedAt
     const interval = setInterval(() => {
       if (Date.now() - startedAt >= 300000) {
+        const durationMs = Date.now() - startedAt
+        game.addFrozenCompensation(durationMs)
         game.thawTime()
         if (game.gameSettings?.timeConstraintEnabled) {
           timer.start()
@@ -258,6 +265,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     setResetTimeEnabled(game.gameSettings?.timeConstraintEnabled ?? false)
     setResetTimeInput(String(Math.floor(game.gameSettings?.timeLimitSeconds ?? 1800) / 60))
     setResetPermanentDiscard(game.gameSettings?.permanentDiscard ?? false)
+    setResetStreakEnabled(game.gameSettings?.streakEnabled ?? true)
     setFreezeStartedAt(null)
     setShowSettingsAfterReset(true)
   }
@@ -267,7 +275,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
       timeConstraintEnabled: resetTimeEnabled,
       timeLimitSeconds: (parseInt(resetTimeInput, 10) || 30) * 60,
       permanentDiscard: resetPermanentDiscard,
-      streakEnabled: game.gameSettings?.streakEnabled ?? true,
+      streakEnabled: resetStreakEnabled,
     }
     game.startGame(deckId, newSettings)
     setShowSettingsAfterReset(false)
@@ -287,35 +295,18 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     ? Math.max(0, Math.floor((effectiveEndTimeMs - Date.now()) / 1000))
     : 0
 
-  const freezeRemainingMs = freezeStartedAt
-    ? Math.max(0, 300000 - (Date.now() - freezeStartedAt))
-    : 0
-  const freezeRemainingSecs = Math.ceil(freezeRemainingMs / 1000)
-
   const GLOW_THRESHOLD = 80
 
   return (
-    <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
+    <div className="flex-1 flex flex-col overflow-hidden" style={{ backgroundColor: 'var(--bg)' }}>
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 min-h-[52px]" style={{ backgroundColor: 'var(--bezel)' }}>
         <div className="flex items-center gap-2">
-          <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-primary)' }}>
+          <motion.button whileTap={{ scale: 0.9 }} onClick={() => { timer.pause(); game.saveTimer(timer.elapsed); onBack() }} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-primary)' }}>
             <ArrowLeft size={20} />
           </motion.button>
         </div>
 
         <div className="flex items-center gap-2 text-xs">
-          {freezeStartedAt && (
-            <motion.span
-              className="font-bold text-sm font-mono"
-              style={{ color: '#54A0FF' }}
-              animate={{
-                textShadow: ['0 0 4px rgba(84,160,255,0.3)', '0 0 12px rgba(0,255,255,0.6)', '0 0 4px rgba(84,160,255,0.3)'],
-              }}
-              transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              ❄️ {formatTime(freezeRemainingSecs)}
-            </motion.span>
-          )}
           <motion.span
             animate={scoreAnim ? { scale: [1, 1.3, 1] } : {}}
             transition={{ duration: 0.2 }}
@@ -333,12 +324,16 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
             {game.totalQuests - completedCount} left
           </span>
           <span style={{ color: 'var(--text-secondary)' }}>•</span>
-          <span
-            className="font-mono"
-            style={{ color: isTimeConstraint && remainingSeconds <= 60 ? '#DC143C' : 'var(--text-primary)' }}
+          <motion.span
+            className="font-mono font-bold"
+            style={{ color: freezeStartedAt ? '#54A0FF' : isTimeConstraint && remainingSeconds <= 60 ? '#DC143C' : 'var(--text-primary)' }}
+            animate={freezeStartedAt ? {
+              textShadow: ['0 0 4px rgba(84,160,255,0.3)', '0 0 12px rgba(0,255,255,0.6)', '0 0 4px rgba(84,160,255,0.3)'],
+            } : {}}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           >
-            {isTimeConstraint ? formatTime(remainingSeconds) : formatTime(timer.elapsed)}
-          </span>
+            ❄️ {isTimeConstraint ? formatTime(remainingSeconds) : formatTime(timer.elapsed)}
+          </motion.span>
         </div>
       </div>
 
@@ -366,7 +361,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
         </motion.div>
       )}
 
-      <div className="flex-1 flex flex-col px-4 py-4 relative overflow-y-auto">
+      <div className="flex-1 flex flex-col px-4 py-4 relative overflow-hidden">
         <div
           className="fixed top-0 bottom-0 left-0 w-2 z-50 pointer-events-none transition-opacity duration-150"
           style={{
@@ -486,7 +481,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
         )}
       </div>
 
-      {streakEnabled && !freezeStartedAt && (
+      {streakEnabled && (
         <div className="flex justify-center gap-2 px-4 pb-2">
           {game.streak > 0 && (
             <div className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold" style={{ backgroundColor: 'var(--surface)', color: '#54A0FF' }}>
@@ -496,7 +491,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
         </div>
       )}
 
-      {streakEnabled && !freezeStartedAt && (
+      {streakEnabled && (
         <div className="flex justify-center gap-2 px-4 pb-3">
           {([{ key: 'doubleDown' as const }, { key: 'freezeTime' as const }, { key: 'freshDraw' as const }] as const).map(({ key }) => (
             <StreakButton
@@ -638,6 +633,32 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
                 <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>minutes</span>
               </div>
             )}
+          </div>
+
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setResetStreakEnabled(!resetStreakEnabled)}
+                className="w-10 h-6 rounded-full relative transition-colors shrink-0"
+                style={{ backgroundColor: resetStreakEnabled ? '#54A0FF' : 'var(--bg)' }}
+              >
+                <div
+                  className="w-4 h-4 rounded-full absolute top-1 transition-transform"
+                  style={{
+                    backgroundColor: 'white',
+                    transform: resetStreakEnabled ? 'translateX(20px)' : 'translateX(4px)',
+                  }}
+                />
+              </div>
+              <div>
+                <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  Streak System
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                  Earn streak powerups by completing quests — Double Down, Freeze Time, Fresh Draw
+                </div>
+              </div>
+            </label>
           </div>
         </div>
       </BottomSheet>

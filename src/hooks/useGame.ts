@@ -178,9 +178,8 @@ export function useGame() {
           const replaceIds = new Set(allToReplace)
           const iter = replacements[Symbol.iterator]()
           return prev.map(c => {
-            if (replaceIds.has(c.id) && c.type !== 'powerup') {
+            if (replaceIds.has(c.id)) {
               const next = iter.next().value
-              // Skip powerup cards in hand that aren't in the replacement set
               if (!next) return c
               return { ...next, flipped: false, type: 'quest' as const }
             }
@@ -360,10 +359,9 @@ export function useGame() {
   const activateStreakPowerup = useCallback((key: StreakPowerup) => {
     if (key === 'doubleDown') {
       setDoubleDownActive(true)
-    } else if (key === 'freezeTime') {
+    } else     if (key === 'freezeTime') {
       setTimeFrozen(true)
       setTimeFrozenUntil(Date.now() + 300000)
-      setFrozenTimeCompensationMs(prev => prev + 300000)
     } else if (key === 'freshDraw') {
       const idsToReplace = handRef.current.filter(c => c.type !== 'powerup').map(c => c.id)
       const currentPool = poolRef.current
@@ -388,6 +386,10 @@ export function useGame() {
     }
     setPowerupCooldowns(prev => ({ ...prev, [key]: streak }))
   }, [streak])
+
+  const addFrozenCompensation = useCallback((ms: number) => {
+    setFrozenTimeCompensationMs(prev => prev + ms)
+  }, [])
 
   const thawTime = useCallback(() => {
     setTimeFrozen(false)
@@ -567,6 +569,7 @@ export function useGame() {
     mulliganPending,
     frozenTimeCompensationMs,
     activateStreakPowerup,
+    addFrozenCompensation,
     thawTime,
     canUseStreakPowerup,
     handleMulliganSelect,

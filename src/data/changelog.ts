@@ -6,6 +6,20 @@ export interface ReleaseEntry {
 
 export const CHANGELOG: ReleaseEntry[] = [
   {
+    version: '1.6.2',
+    label: 'Bug Fix Pass',
+    items: [
+      'Fixed scroll on game page and title screen (added overflow-hidden)',
+      'Fixed Double Down badge showing ×2 instead of the actual doubled point score',
+      'Fixed Freeze Time pre-adding 5 minutes to deadline instead of pausing remaining time (now tracks actual freeze duration)',
+      'Fixed Freeze Time showing a separate countdown element — blue pulse now appears ON the timer itself',
+      'Fixed Freeze Time hiding streak counter and powerup buttons at bottom',
+      'Fixed Shuffle powerup card not being consumed from hand (stayed on screen for reuse)',
+      'Fixed reset-game settings sheet missing Streak System toggle (now matches PreGameSheet options)',
+      'Fixed going back mid-game leaving timer running and potentially causing blank screen (timer paused + state saved on back)',
+    ],
+  },
+  {
     version: '1.6.1',
     label: 'Bug Fix Pass',
     items: [
@@ -186,7 +200,7 @@ export const CHANGELOG: ReleaseEntry[] = [
   },
 ]
 
-export const CURRENT_VERSION = '1.6.1'
+export const CURRENT_VERSION = '1.6.2'
 
 export function getLatestRelease(): ReleaseEntry {
   return CHANGELOG[0]

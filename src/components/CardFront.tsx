@@ -56,7 +56,7 @@ export default function CardFront({ emoji, title, description, value, color, onF
             style={{ backgroundColor: color, color: 'white' }}
           >
             {showDoubleDownBadge ? (
-              <>2× <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>★{shownValue}</span></>
+              <>2× <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>★{shownValue}</span> <span style={{ color: '#2ED573' }}>★{shownValue * 2}</span></>
             ) : (
               <>★{shownValue}</>
             )}
