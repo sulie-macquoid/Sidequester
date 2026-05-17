@@ -80,8 +80,6 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   timerRef.current = timer
   const startedRef = useRef(false)
   const gameOverHandled = useRef(false)
-  const freezeStartedRef = useRef<number | null>(null)
-  freezeStartedRef.current = freezeStartedAt
 
   const streakEnabled = gameSettings?.streakEnabled ?? true
 
@@ -138,10 +136,9 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     if (!game.gameSettings?.timeConstraintEnabled || !game.session?.startedAt || !started) return
     const rawEndTime = game.session.startedAt + game.gameSettings.timeLimitSeconds * 1000
     const check = setInterval(() => {
-      const adjustedEndTime = freezeStartedRef.current
-        ? rawEndTime + (Date.now() - freezeStartedRef.current)
-        : rawEndTime
-      const remaining = Math.floor((adjustedEndTime - Date.now()) / 1000)
+      const compensation = game.frozenTimeCompensationMs || 0
+      const effectiveEndTime = rawEndTime + compensation
+      const remaining = Math.floor((effectiveEndTime - Date.now()) / 1000)
       if (remaining <= 0) {
         if (!game.gameOver) {
           timer.pause()
@@ -150,7 +147,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
       }
     }, 1000)
     return () => clearInterval(check)
-  }, [game.gameSettings?.timeConstraintEnabled, game.session?.startedAt, started, game.gameOver])
+  }, [game.gameSettings?.timeConstraintEnabled, game.session?.startedAt, started, game.gameOver, game.frozenTimeCompensationMs])
 
   useEffect(() => {
     if (game.timeFrozen && !freezeStartedAt) {
@@ -165,8 +162,9 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
 
   useEffect(() => {
     if (!freezeStartedAt) return
+    const startedAt = freezeStartedAt
     const interval = setInterval(() => {
-      if (Date.now() - freezeStartedAt! >= 300000) {
+      if (Date.now() - startedAt >= 300000) {
         game.thawTime()
         if (game.gameSettings?.timeConstraintEnabled) {
           timer.start()
@@ -198,10 +196,16 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   }
 
   const handlePowerupActivate = (cardId: string) => {
+    const card = game.hand.find(c => c.id === cardId)
+    if (card?.type === 'powerup' && (card as HandPowerupCard).powerupKey === 'mulligan') {
+      setMulliganSelecting(true)
+      game.completeQuest(cardId)
+      setExpandedCardId(null)
+      return
+    }
     game.completeQuest(cardId)
     setExpandedCardId(null)
     triggerHaptic()
-    setMulliganSelecting(false)
   }
 
   const SWIPE_THRESHOLD = 80
@@ -213,13 +217,6 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
 
     if (card.type === 'powerup') {
       if (info.offset.x > SWIPE_THRESHOLD) {
-        const pc = card as HandPowerupCard
-        if (pc.powerupKey === 'mulligan') {
-          setMulliganSelecting(true)
-          game.completeQuest(cardId)
-          setExpandedCardId(null)
-          return
-        }
         handlePowerupActivate(cardId)
       }
       return
@@ -233,12 +230,6 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   }
 
   const handleCardClick = (cardId: string) => {
-    const card = game.hand.find(c => c.id === cardId)
-    if (!card) return
-    if (card.type === 'powerup') {
-      setExpandedCardId(cardId)
-      return
-    }
     setExpandedCardId(cardId)
   }
 
@@ -250,6 +241,11 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
     game.handleMulliganSelect(targetCardId)
     setMulliganSelecting(false)
     setExpandedCardId(null)
+  }
+
+  const handleMulliganCancel = () => {
+    setMulliganSelecting(false)
+    game.cancelMulligan()
   }
 
   const handleResetConfirm = () => {
@@ -271,6 +267,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
       timeConstraintEnabled: resetTimeEnabled,
       timeLimitSeconds: (parseInt(resetTimeInput, 10) || 30) * 60,
       permanentDiscard: resetPermanentDiscard,
+      streakEnabled: game.gameSettings?.streakEnabled ?? true,
     }
     game.startGame(deckId, newSettings)
     setShowSettingsAfterReset(false)
@@ -283,11 +280,11 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
   const rawEndTimeMs = isTimeConstraint
     ? game.session!.startedAt + game.gameSettings!.timeLimitSeconds * 1000
     : 0
-  const adjustedEndTimeMs = freezeStartedAt && isTimeConstraint
-    ? rawEndTimeMs + (Date.now() - freezeStartedAt)
-    : rawEndTimeMs
+  const effectiveEndTimeMs = isTimeConstraint
+    ? rawEndTimeMs + (game.frozenTimeCompensationMs || 0)
+    : 0
   const remainingSeconds = isTimeConstraint
-    ? Math.max(0, Math.floor((adjustedEndTimeMs - Date.now()) / 1000))
+    ? Math.max(0, Math.floor((effectiveEndTimeMs - Date.now()) / 1000))
     : 0
 
   const freezeRemainingMs = freezeStartedAt
@@ -319,37 +316,55 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
               ❄️ {formatTime(freezeRemainingSecs)}
             </motion.span>
           )}
-          {!freezeStartedAt && (
-            <motion.span
-              animate={scoreAnim ? { scale: [1, 1.3, 1] } : {}}
-              transition={{ duration: 0.2 }}
-              className="font-bold text-sm"
-              style={{ color: '#FECA57' }}
-            >
-              {game.score}
-            </motion.span>
-          )}
-          {!freezeStartedAt && (
-            <>
-              <span style={{ color: 'var(--text-secondary)' }}>|</span>
-              <span style={{ color: 'var(--text-secondary)' }}>
-                {completedCount}/{game.totalQuests}
-              </span>
-              <span style={{ color: 'var(--text-secondary)' }}>•</span>
-              <span style={{ color: 'var(--text-secondary)' }}>
-                {game.totalQuests - completedCount} left
-              </span>
-              <span style={{ color: 'var(--text-secondary)' }}>•</span>
-              <span
-                className="font-mono"
-                style={{ color: isTimeConstraint && remainingSeconds <= 60 ? '#DC143C' : 'var(--text-primary)' }}
-              >
-                {isTimeConstraint ? formatTime(remainingSeconds) : formatTime(timer.elapsed)}
-              </span>
-            </>
-          )}
+          <motion.span
+            animate={scoreAnim ? { scale: [1, 1.3, 1] } : {}}
+            transition={{ duration: 0.2 }}
+            className="font-bold text-sm"
+            style={{ color: '#FECA57' }}
+          >
+            {game.score}
+          </motion.span>
+          <span style={{ color: 'var(--text-secondary)' }}>|</span>
+          <span style={{ color: 'var(--text-secondary)' }}>
+            {completedCount}/{game.totalQuests}
+          </span>
+          <span style={{ color: 'var(--text-secondary)' }}>•</span>
+          <span style={{ color: 'var(--text-secondary)' }}>
+            {game.totalQuests - completedCount} left
+          </span>
+          <span style={{ color: 'var(--text-secondary)' }}>•</span>
+          <span
+            className="font-mono"
+            style={{ color: isTimeConstraint && remainingSeconds <= 60 ? '#DC143C' : 'var(--text-primary)' }}
+          >
+            {isTimeConstraint ? formatTime(remainingSeconds) : formatTime(timer.elapsed)}
+          </span>
         </div>
       </div>
+
+      {mulliganSelecting && (
+        <motion.div
+          className="fixed inset-0 z-30 flex flex-col items-center justify-center"
+          style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={handleMulliganCancel}
+        >
+          <div className="text-center px-6" onClick={e => e.stopPropagation()}>
+            <p className="text-sm font-medium mb-3" style={{ color: 'white' }}>
+              Tap a card to swap with the recovered discard
+            </p>
+            <button
+              onClick={handleMulliganCancel}
+              className="px-4 py-2 rounded-lg text-xs min-h-[44px]"
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.7)' }}
+            >
+              Cancel
+            </button>
+          </div>
+        </motion.div>
+      )}
 
       <div className="flex-1 flex flex-col px-4 py-4 relative overflow-y-auto">
         <div
@@ -489,6 +504,7 @@ export default function GameScreen({ deckId, gameSettings, onComplete, onBack }:
               powerupKey={key}
               streak={game.streak}
               canUse={game.canUseStreakPowerup(key)}
+              usedAt={game.powerupCooldowns[key]}
               onActivate={() => game.activateStreakPowerup(key)}
             />
           ))}

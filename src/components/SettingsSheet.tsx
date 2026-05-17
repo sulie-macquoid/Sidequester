@@ -94,7 +94,7 @@ export default function SettingsSheet({ open, onClose }: Props) {
             <div className="text-xs italic" style={{ color: 'var(--text-secondary)' }}>
               vibecoded by Sulaiman &quot;Bossman&quot; Al Harthy
             </div>
-            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.5.4</div>
+            <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>v1.6.1</div>
             <div className="relative inline-block">
               <button
                 onClick={handleShareLink}

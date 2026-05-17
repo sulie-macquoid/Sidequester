@@ -6,10 +6,11 @@ interface Props {
   powerupKey: StreakPowerup
   streak: number
   canUse: boolean
+  usedAt?: number
   onActivate: () => void
 }
 
-export default function StreakButton({ powerupKey, streak, canUse, onActivate }: Props) {
+export default function StreakButton({ powerupKey, streak, canUse, usedAt, onActivate }: Props) {
   const def = STREAK_POWERUPS.find(s => s.key === powerupKey)!
 
   const progress = Math.min(1, streak / def.unlockStreak)
@@ -69,9 +70,9 @@ export default function StreakButton({ powerupKey, streak, canUse, onActivate }:
         </div>
       )}
 
-      {!isLocked && !isCharged && (
+      {!isLocked && !isCharged && usedAt !== undefined && (
         <span className="text-[9px]" style={{ color: '#54A0FF' }}>
-          {streak}/{streak + def.rechargeCount}
+          {streak - usedAt}/{def.rechargeCount}
         </span>
       )}
     </motion.button>

@@ -6,6 +6,24 @@ export interface ReleaseEntry {
 
 export const CHANGELOG: ReleaseEntry[] = [
   {
+    version: '1.6.1',
+    label: 'Bug Fix Pass',
+    items: [
+      'Fixed freeze time not actually pausing time-constraint countdown (now uses permanent compensation offset)',
+      'Fixed tapping (not swiping) Mulligan powerup card silently consuming it without showing swap selection',
+      'Fixed Shuffle and Fresh Draw duplicating quests in hand due to stale closure on pool',
+      'Fixed multiple streak powerup cooldowns expiring at same streak — all are now cleared, not just the last',
+      'Fixed Mulligan leaving hand with 3 cards and wasting a pool quest (replacement now picked inline)',
+      'Fixed score and quest count being hidden during freeze, leaving player with no feedback',
+      'Fixed pool quest being leaked when a powerup card substitutes the draw (quest now consumed before 5% check)',
+      'Fixed drawn powerup keys and star-boosted card IDs lost on session resume (now persisted/restored)',
+      'Fixed streak powerup recharge display showing meaningless denominator (now shows real progress)',
+      'Fixed post-thaw interval race condition causing redundant timer.start()',
+      'Added cancel button to mulligan selection overlay so player can escape without swapping',
+      'Fixed handleApplySettings in mid-game reset omitting streakEnabled preference',
+    ],
+  },
+  {
     version: '1.6.0',
     label: 'Streaks & Powerups',
     items: [
@@ -167,7 +185,7 @@ export const CHANGELOG: ReleaseEntry[] = [
   },
 ]
 
-export const CURRENT_VERSION = '1.6.0'
+export const CURRENT_VERSION = '1.6.1'
 
 export function getLatestRelease(): ReleaseEntry {
   return CHANGELOG[0]

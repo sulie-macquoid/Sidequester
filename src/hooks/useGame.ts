@@ -27,6 +27,8 @@ export function useGame() {
   const [timeFrozenUntil, setTimeFrozenUntil] = useState<number | null>(null)
   const [starBoostedCardIds, setStarBoostedCardIds] = useState<Set<string>>(new Set())
   const [mulliganPending, setMulliganPending] = useState(false)
+  const [frozenTimeCompensationMs, setFrozenTimeCompensationMs] = useState(0)
+
   const sessionRef = useRef(session)
   sessionRef.current = session
   const scoreRef = useRef(score)
@@ -40,6 +42,12 @@ export function useGame() {
   const doubleDownRef = useRef(doubleDownActive)
   doubleDownRef.current = doubleDownActive
   const usedPowerupKeysRef = useRef<Set<PowerupCardType>>(new Set())
+  const poolRef = useRef(pool)
+  poolRef.current = pool
+  const weightsRef = useRef(weights)
+  weightsRef.current = weights
+  const drawnIdsRef = useRef(drawnIds)
+  drawnIdsRef.current = drawnIds
 
   const persistSession = useCallback(async (s: Session) => {
     await saveSession(s)
@@ -73,11 +81,12 @@ export function useGame() {
   const replaceCard = useCallback((cardId: string) => {
     setHand(prev => {
       const permDiscard = gameSettings?.permanentDiscard ?? false
-      const remainingPool = pool.length > 0 ? pool : []
+      const currentPool = poolRef.current
+      const remainingPool = currentPool.length > 0 ? currentPool : []
       const discardFilteredPool = permDiscard
         ? remainingPool.filter(q => !(sessionRef.current?.discardedQuestIds ?? []).includes(q.id))
         : remainingPool
-      const availableWeights = resetWeightsIfCycleComplete(weights, [...drawnIds, ...completedEntries.map(e => e.questId).filter(Boolean)], drawnIds)
+      const availableWeights = resetWeightsIfCycleComplete(weightsRef.current, [...drawnIdsRef.current, ...completedEntries.map(e => e.questId).filter(Boolean)], drawnIdsRef.current)
 
       let picked: Quest | null = pickWeighted(discardFilteredPool, availableWeights)
 
@@ -89,6 +98,12 @@ export function useGame() {
         return newHand
       }
 
+      // Always consume the picked quest from pool/weights/drawnIds first (M1)
+      const newPool = currentPool.filter(q => q.id !== picked.id)
+      poolRef.current = newPool
+      weightsRef.current = availableWeights
+      drawnIdsRef.current = [...drawnIdsRef.current, picked.id]
+
       const powerupOnScreen = isPowerupCardOnScreen(prev)
       if (!powerupOnScreen && Math.random() < 0.05) {
         const availKey = pickAvailablePowerupKey(prev)
@@ -99,11 +114,7 @@ export function useGame() {
         }
       }
 
-      setPool(p => p.filter(q => q.id !== picked!.id))
-      setWeights(availableWeights)
-      setDrawnIds(prevIds => [...prevIds, picked!.id])
-
-      const newCycle = [...drawnIds, picked!.id]
+      const newCycle = [...drawnIdsRef.current, picked.id]
       const allQuestIds = Object.keys(availableWeights)
       const allDrawn = allQuestIds.length > 0 &&
         [...new Set([...completedEntries.map(e => e.questId).filter(Boolean), ...newCycle])]
@@ -114,7 +125,11 @@ export function useGame() {
 
       return prev.map(c => c.id === cardId ? { ...picked!, flipped: false } : c)
     })
-  }, [pool, weights, drawnIds, completedEntries, gameSettings, isPowerupCardOnScreen, pickAvailablePowerupKey, buildPowerupCardData])
+  }, [completedEntries, gameSettings, isPowerupCardOnScreen, pickAvailablePowerupKey, buildPowerupCardData])
+
+  const replaceCardSync = useCallback((cardId: string) => {
+    replaceCard(cardId)
+  }, [replaceCard])
 
   const completeQuest = useCallback((cardId: string) => {
     const card = hand.find(c => c.id === cardId)
@@ -126,25 +141,63 @@ export function useGame() {
         const newScore = scoreRef.current + pc.value
         setScore(newScore)
         if (sessionRef.current) {
-          const updated: Session = { ...sessionRef.current, currentScore: newScore }
+          const updated: Session = {
+            ...sessionRef.current,
+            currentScore: newScore,
+            usedPowerupCardIds: [...usedPowerupKeysRef.current],
+          }
           sessionRef.current = updated
           persistSession(updated)
         }
-        replaceCard(cardId)
+        replaceCardSync(cardId)
       } else if (pc.powerupKey === 'starPower') {
         const currentIds = hand.filter(c => c.type !== 'powerup').map(c => c.id)
         setStarBoostedCardIds(new Set(currentIds))
-        replaceCard(cardId)
+        if (sessionRef.current) {
+          const updated: Session = {
+            ...sessionRef.current,
+            starBoostedIds: currentIds,
+            usedPowerupCardIds: [...usedPowerupKeysRef.current],
+          }
+          sessionRef.current = updated
+          persistSession(updated)
+        }
+        replaceCardSync(cardId)
       } else if (pc.powerupKey === 'mulligan') {
         setMulliganPending(true)
       } else if (pc.powerupKey === 'shuffle') {
-        replaceCard(cardId)
-        const toReplace = hand.filter(c => c.type !== 'powerup' && c.id !== cardId)
-        Promise.resolve().then(() => {
-          for (const c of toReplace) {
-            replaceCard(c.id)
-          }
+        const nonPowerupIds = hand.filter(c => c.type !== 'powerup').map(c => c.id)
+        // Replace the shuffle card slot + all non-powerup cards in one batch
+        const allToReplace = [...nonPowerupIds, cardId]
+        const currentPool = poolRef.current
+        const shuffledPool = [...currentPool].sort(() => Math.random() - 0.5)
+        const replacements = shuffledPool.slice(0, allToReplace.length)
+        const newPoolArr = shuffledPool.slice(replacements.length)
+
+        setHand(prev => {
+          const replaceIds = new Set(allToReplace)
+          const iter = replacements[Symbol.iterator]()
+          return prev.map(c => {
+            if (replaceIds.has(c.id) && c.type !== 'powerup') {
+              const next = iter.next().value
+              // Skip powerup cards in hand that aren't in the replacement set
+              if (!next) return c
+              return { ...next, flipped: false, type: 'quest' as const }
+            }
+            return c
+          })
         })
+        poolRef.current = newPoolArr as Quest[]
+        setPool(newPoolArr as Quest[])
+
+        if (sessionRef.current) {
+          const updated: Session = {
+            ...sessionRef.current,
+            usedPowerupCardIds: [...usedPowerupKeysRef.current],
+          }
+          sessionRef.current = updated
+          persistSession(updated)
+        }
       }
       return
     }
@@ -174,17 +227,18 @@ export function useGame() {
     setCompletedEntries(newEntries)
     const newStreak = streak + 1
     setStreak(newStreak)
-    const cooldowns = { ...powerupCooldowns }
+
+    // H2 — accumulate all expired cooldowns, single setState
+    const newCooldowns = { ...powerupCooldowns }
     for (const sp of STREAK_POWERUPS) {
-      if (sp.key in cooldowns) {
-        const usedAt = cooldowns[sp.key]
+      if (sp.key in newCooldowns) {
+        const usedAt = newCooldowns[sp.key]
         if (newStreak >= usedAt + sp.rechargeCount) {
-          const next = { ...cooldowns }
-          delete next[sp.key]
-          setPowerupCooldowns(next)
+          delete newCooldowns[sp.key]
         }
       }
     }
+    setPowerupCooldowns(newCooldowns)
 
     setStarBoostedCardIds(prev => {
       const next = new Set(prev)
@@ -198,13 +252,15 @@ export function useGame() {
         completedQuests: newEntries,
         currentScore: newScore,
         streak: newStreak,
+        usedPowerupCardIds: [...usedPowerupKeysRef.current],
+        starBoostedIds: [...starBoostedCardIds].filter(id => id !== q.id),
       }
       sessionRef.current = updated
       persistSession(updated)
     }
 
-    replaceCard(cardId)
-  }, [hand, replaceCard, persistSession, starBoostedCardIds, powerupCooldowns, streak])
+    replaceCardSync(cardId)
+  }, [hand, replaceCardSync, persistSession, starBoostedCardIds, powerupCooldowns, streak])
 
   const handleMulliganSelect = useCallback((targetCardId: string) => {
     if (!sessionRef.current) return
@@ -226,18 +282,29 @@ export function useGame() {
       const mulliganId = mulliganCard?.id
 
       setHand(prev => {
-        const newHand = prev
+        // Remove mulligan card, replace target with recovered discard
+        const working = prev
           .map(c => c.id === targetCardId ? { ...recoveredQuest, flipped: false, type: 'quest' as const } : c)
           .filter(c => c.id !== mulliganId)
-        return newHand
+
+        // H3 — pick a replacement from pool for the freed mulligan slot
+        const currentPool = poolRef.current
+        const poolForPick = currentPool.filter(q => !working.some(h => h.id === q.id))
+        const replacement = pickWeighted(poolForPick, weightsRef.current)
+        if (replacement) {
+          const newPool = poolForPick.filter(q => q.id !== replacement.id)
+          poolRef.current = newPool
+          const newWeights = { ...weightsRef.current }
+          delete newWeights[replacement.id]
+          weightsRef.current = newWeights
+          working.push({ ...replacement, flipped: false, type: 'quest' as const })
+        }
+
+        return working
       })
       setMulliganPending(false)
-
-      if (mulliganId) {
-        replaceCard(mulliganId)
-      }
     })
-  }, [replaceCard])
+  }, [])
 
   const cancelMulligan = useCallback(() => {
     setMulliganPending(false)
@@ -283,8 +350,8 @@ export function useGame() {
       persistSession(updated)
     }
 
-    replaceCard(cardId)
-  }, [hand, replaceCard, persistSession, gameSettings])
+    replaceCardSync(cardId)
+  }, [hand, replaceCardSync, persistSession, gameSettings])
 
   const flipCard = useCallback((cardId: string) => {
     setHand(prev => prev.map(c => c.id === cardId ? { ...c, flipped: !c.flipped } : c))
@@ -296,17 +363,31 @@ export function useGame() {
     } else if (key === 'freezeTime') {
       setTimeFrozen(true)
       setTimeFrozenUntil(Date.now() + 300000)
+      setFrozenTimeCompensationMs(prev => prev + 300000)
     } else if (key === 'freshDraw') {
+      const idsToReplace = handRef.current.filter(c => c.type !== 'powerup').map(c => c.id)
+      const currentPool = poolRef.current
+      const shuffledPool = [...currentPool].sort(() => Math.random() - 0.5)
+      const replacements = shuffledPool.slice(0, idsToReplace.length)
+      const newPoolArr = shuffledPool.slice(replacements.length)
+
       setHand(prev => {
-        const idsToReplace = prev.filter(c => c.type !== 'powerup').map(c => c.id)
-        for (const id of idsToReplace) {
-          replaceCard(id)
-        }
-        return prev
+        const replaceIds = new Set(idsToReplace)
+        const iter = replacements[Symbol.iterator]()
+        return prev.map(c => {
+          if (replaceIds.has(c.id)) {
+            const next = iter.next().value
+            if (!next) return c
+            return { ...next, flipped: false, type: 'quest' as const }
+          }
+          return c
+        })
       })
+      poolRef.current = newPoolArr as Quest[]
+      setPool(newPoolArr as Quest[])
     }
     setPowerupCooldowns(prev => ({ ...prev, [key]: streak }))
-  }, [replaceCard, streak])
+  }, [streak])
 
   const thawTime = useCallback(() => {
     setTimeFrozen(false)
@@ -357,8 +438,9 @@ export function useGame() {
       setDoubleDownActive(existing.doubleDownActive ?? false)
       setTimeFrozen(existing.timeFrozen ?? false)
       setTimeFrozenUntil(existing.timeFrozenUntil ?? null)
-      usedPowerupKeysRef.current = new Set()
-      setStarBoostedCardIds(new Set())
+      usedPowerupKeysRef.current = new Set((existing.usedPowerupCardIds ?? []).filter((k): k is PowerupCardType => POWERUP_CARDS.some(p => p.key === k)))
+      setStarBoostedCardIds(new Set(existing.starBoostedIds ?? []))
+      setMulliganPending(false)
 
       const w: Record<string, number> = {}
       for (const q of allQuests) {
@@ -398,6 +480,7 @@ export function useGame() {
     setStarBoostedCardIds(new Set())
     setMulliganPending(false)
     usedPowerupKeysRef.current = new Set()
+    setFrozenTimeCompensationMs(0)
 
     const shuffled = [...allQuests].sort(() => Math.random() - 0.5)
     const dealt = shuffled.slice(0, Math.min(HAND_SIZE, shuffled.length))
@@ -447,6 +530,7 @@ export function useGame() {
     setStarBoostedCardIds(new Set())
     setMulliganPending(false)
     usedPowerupKeysRef.current = new Set()
+    setFrozenTimeCompensationMs(0)
   }, [saveSession])
 
   const endGame = useCallback(async () => {
@@ -481,6 +565,7 @@ export function useGame() {
     timeFrozenUntil,
     starBoostedCardIds,
     mulliganPending,
+    frozenTimeCompensationMs,
     activateStreakPowerup,
     thawTime,
     canUseStreakPowerup,
