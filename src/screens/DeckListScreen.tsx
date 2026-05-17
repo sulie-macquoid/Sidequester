@@ -120,7 +120,7 @@ export default function DeckListScreen({ decks, onSelectDeck, onCreateDeck, onUp
   return (
     <>
       <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--bg)' }}>
-        <div className="flex items-center justify-between px-4 py-3 min-h-[52px]" style={{ backgroundColor: 'var(--bezel)' }}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 min-h-[52px]" style={{ backgroundColor: 'var(--bezel)' }}>
           <div className="flex items-center gap-2">
             <motion.button whileTap={{ scale: 0.9 }} onClick={onBack} className="min-w-[44px] min-h-[44px] flex items-center justify-center" style={{ color: 'var(--text-primary)' }}>
               <ArrowLeft size={20} />
